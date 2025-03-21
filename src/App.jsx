@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { IoSettingsOutline } from 'react-icons/io5';
-import { FaHome, FaSearch, FaBook, FaHeart } from 'react-icons/fa';
+import { FaBook } from 'react-icons/fa';
+import { GiFootprint } from 'react-icons/gi';
 import SettingsMenu from './components/SettingsMenu';
 import StepDisplay from './components/StepDisplay';
 import stepService from './services/stepService';
@@ -99,39 +100,18 @@ function App() {
     <div className="app-container">
       {/* Main content area */}
       <div className="flex flex-col overflow-hidden min-h-screen">
-        {/* Top bar with settings */}
-        <header className="app-header">
-          <div className="text-xl font-bold flex items-center">
-            <span className="text-spotify-green mr-2">●</span> Steps
-          </div>
-          <div className="flex items-center">
-            {currentStep && (
-              <div className="hidden sm:block mr-4 text-secondary-text">
-                Step {currentStepId} of {totalSteps}
-              </div>
-            )}
-            <button 
-              onClick={() => setIsSettingsOpen(true)}
-              className="ml-2 p-2 rounded-full bg-spotify-card hover:bg-spotify-card-hover text-primary-text transition-colors"
-            >
-              <IoSettingsOutline size={24} className="text-secondary-text hover:text-primary-text" />
-            </button>
-          </div>
-        </header>
+        {/* Header removed completely */}
 
         {/* Content area */}
         <main className="app-main">
-          {/* Step navigation */}
-          <div className="card mb-6">
-            <div className="p-4">
-              <h2 className="text-lg font-bold text-primary-text mb-4">
-                {currentStep ? currentStep.title : 'Select a Step'}
-              </h2>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Step navigation - more compact */}
+          <div className="card mb-3 border border-gray-800 rounded-lg">
+            <div className="p-3">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <select
                   value={currentStepId}
                   onChange={handleStepChange}
-                  className="px-4 py-2 rounded-md bg-spotify-darker border border-gray-800 text-primary-text min-w-[200px] truncate focus:ring-spotify-green focus:border-spotify-green"
+                  className="px-3 py-1.5 rounded-md bg-spotify-darker border border-gray-800 text-primary-text truncate focus:ring-spotify-green focus:border-spotify-green text-sm flex-1"
                 >
                   {stepTitles.map((step) => (
                     <option key={step.id} value={step.id} title={step.title}>
@@ -144,26 +124,24 @@ function App() {
                   <button
                     onClick={handlePrevious}
                     disabled={currentStepId === 1}
-                    className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 rounded-full bg-secondary-button-500 text-primary-text text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-button-600 transition-colors"
                   >
                     Previous
                   </button>
                   <button
                     onClick={handleNext}
                     disabled={currentStepId === totalSteps}
-                    className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 rounded-full bg-secondary-button-500 text-primary-text text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-secondary-button-600 transition-colors"
                   >
                     Next
                   </button>
+                  <button
+                    onClick={handleSetStepForToday}
+                    className="px-3 py-1.5 rounded-full bg-spotify-green text-primary-text text-sm font-medium hover:bg-spotify-green-hover transition-colors"
+                  >
+                    Set Today
+                  </button>
                 </div>
-              </div>
-              <div className="mt-4">
-                <button
-                  onClick={handleSetStepForToday}
-                  className="btn-primary"
-                >
-                  Set as Today's Step
-                </button>
               </div>
             </div>
           </div>
@@ -180,6 +158,31 @@ function App() {
           )}
         </main>
         <SettingsMenu isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+        
+        {/* Sticky Footer */}
+        <footer className="fixed bottom-0 left-0 right-0 bg-spotify-darker py-3 px-4 flex justify-around items-center border-t border-gray-800">
+          <button 
+            className="p-3 rounded-full hover:bg-spotify-card-hover text-secondary-text hover:text-primary-text transition-colors"
+            aria-label="Steps"
+          >
+            <GiFootprint size={24} />
+          </button>
+          
+          <button 
+            className="p-3 rounded-full hover:bg-spotify-card-hover text-secondary-text hover:text-primary-text transition-colors"
+            aria-label="Book"
+          >
+            <FaBook size={24} />
+          </button>
+          
+          <button 
+            onClick={() => setIsSettingsOpen(true)}
+            className="p-3 rounded-full hover:bg-spotify-card-hover text-secondary-text hover:text-primary-text transition-colors"
+            aria-label="Settings"
+          >
+            <IoSettingsOutline size={24} />
+          </button>
+        </footer>
       </div>
     </div>
   );

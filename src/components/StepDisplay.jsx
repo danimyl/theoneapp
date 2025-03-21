@@ -12,7 +12,7 @@ const StepDisplay = ({ step, stepForToday }) => {
   const durations = step?.durations || practices.map(() => 0);
   
   // Get store access
-  const { practiceChecks, setPracticeChecks } = useSettingsStore();
+  const { practiceChecks, setPracticeChecks, alwaysHourlyReminders } = useSettingsStore();
   
   // State for timer
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -203,114 +203,122 @@ const StepDisplay = ({ step, stepForToday }) => {
   }
 
   return (
-    <div className="bg-spotify-card rounded-lg overflow-hidden">
-      {/* Header area with cover art style */}
-      <div className="p-8 bg-gradient-to-b from-spotify-card-hover to-spotify-card">
+    <div className="flex flex-col space-y-3">
+      {/* Zone 1: Step Selector - Top section with title and badges */}
+      <div className="bg-spotify-card rounded-lg p-4 border border-gray-800">
         {stepForToday === stepId && (
-          <div className="inline-block px-3 py-1 rounded-full bg-spotify-green text-xs font-semibold text-primary-text mb-3">
+          <div className="inline-block px-3 py-1 rounded-full bg-spotify-green text-xs font-semibold text-primary-text mb-2">
             TODAY'S STEP
           </div>
         )}
         
-        <h2 className="text-3xl font-bold text-primary-text mb-3">{stepTitle}</h2>
+        <h2 className="text-2xl font-bold text-primary-text mb-2">{stepTitle}</h2>
         
-        <div className="flex items-center mb-4 text-secondary-text text-sm">
-          <span className="inline-block h-8 w-8 rounded-full bg-spotify-green mr-2 flex items-center justify-center">
-            <FaCheck className="text-primary-text" />
+        <div className="flex items-center text-secondary-text text-sm">
+          <span className="inline-block h-6 w-6 rounded-full bg-spotify-green mr-2 flex items-center justify-center">
+            <FaCheck className="text-xs text-primary-text" />
           </span>
           <span>Step {stepId}</span>
           <span className="mx-2">•</span>
-          <span>{stepHourly ? 'Hourly Reminders On' : 'Reminders Off'}</span>
+          <span>{stepHourly || alwaysHourlyReminders ? 'Hourly Reminders On' : 'Reminders Off'}</span>
         </div>
-        
-        <p className="text-secondary-text mb-6 leading-relaxed max-w-3xl">{stepInstructions}</p>
-        
-        {/* Play button */}
-        <div className="mt-4">
+      </div>
+      
+      {/* Zone 2: Step Instructions - Middle scrollable section */}
+      <div className="bg-spotify-card rounded-lg border border-gray-800 flex-1">
+        <div className="max-h-[30vh] overflow-y-auto p-4">
+          <p className="text-secondary-text leading-relaxed">{stepInstructions}</p>
+        </div>
+      </div>
+      
+      {/* Zone 3: Practice Functions - Bottom section */}
+      <div className="bg-spotify-card rounded-lg border border-gray-800">
+        {/* Timer controls */}
+        <div className="p-4 border-b border-gray-800">
           {!isTimerRunning ? (
             <button
               onClick={handleToggleTimer}
-              className="inline-flex items-center px-8 py-3 bg-spotify-green text-primary-text rounded-full hover:bg-spotify-green-hover transition-colors font-bold text-lg"
+              className="inline-flex items-center px-6 py-2 bg-spotify-green text-primary-text rounded-full hover:bg-spotify-green-hover transition-colors font-bold"
             >
-              <FaPlay className="mr-2" /> Start Practices
+              <FaPlay className="mr-2 text-sm" /> Start Practices
             </button>
           ) : (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={handleToggleTimer}
-                className="inline-flex items-center px-8 py-3 bg-spotify-green text-primary-text rounded-full hover:bg-spotify-green-hover transition-colors font-bold text-lg"
+                className="inline-flex items-center px-6 py-2 bg-spotify-green text-primary-text rounded-full hover:bg-spotify-green-hover transition-colors font-bold"
               >
-                <FaPause className="mr-2" /> Pause
+                <FaPause className="mr-2 text-sm" /> Pause
               </button>
               <button
                 onClick={handleStopTimer}
-                className="inline-flex items-center px-6 py-3 bg-secondary-button-500 text-primary-text rounded-full hover:bg-secondary-button-600 transition-colors"
+                className="inline-flex items-center px-4 py-2 bg-secondary-button-500 text-primary-text rounded-full hover:bg-secondary-button-600 transition-colors"
               >
-                <FaStop className="mr-2" /> Stop
+                <FaStop className="mr-2 text-sm" /> Stop
               </button>
               {timeLeft > 0 && (
-                <div className="text-secondary-text ml-3">
+                <div className="text-secondary-text ml-2">
                   {formatTime(timeLeft)} remaining
                 </div>
               )}
             </div>
           )}
         </div>
-      </div>
-      
-      {/* Practice tracks */}
-      <div className="p-8">
-        <div className="mb-4 text-sm uppercase font-bold tracking-wider text-secondary-text border-b border-gray-800 pb-2">
-          Practices
-        </div>
         
-        <div className="space-y-4 mt-4">
-          {practices.map((practice, index) => (
-            <div 
-              key={index} 
-              className={`flex items-center p-3 rounded ${
-                currentIndex === index && isTimerRunning ? 'bg-spotify-card-hover' : ''
-              } hover:bg-spotify-card-hover/50 cursor-pointer`}
-              onClick={() => handleSelectPractice(index)}
-            >
-              <div className="w-8 text-secondary-text text-right mr-4">
-                {index + 1}
-              </div>
-              
-              <div className="flex-1">
-                <div className="flex items-center">
-                  <div 
-                    className={`w-6 h-6 rounded-sm mr-3 flex items-center justify-center border ${
-                      completed[index] 
-                        ? 'bg-spotify-green border-spotify-green' 
-                        : 'border-gray-600 hover:border-gray-400'
-                    } cursor-pointer`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleComplete(index);
-                    }}
-                  >
-                    {completed[index] && <FaCheck className="text-sm text-primary-text" />}
-                  </div>
-                  
-                  <div className={`font-medium ${
-                    completed[index] ? 'text-secondary-text' : 'text-primary-text'
-                  }`}>
-                    {practice || `Practice ${index + 1}`}
+        {/* Practice tracks */}
+        <div className="p-4">
+          <div className="mb-3 text-xs uppercase font-bold tracking-wider text-secondary-text">
+            Practices
+          </div>
+          
+          <div className="space-y-2">
+            {practices.map((practice, index) => (
+              <div 
+                key={index} 
+                className={`flex items-center p-2 rounded ${
+                  currentIndex === index && isTimerRunning ? 'bg-spotify-card-hover' : ''
+                } hover:bg-spotify-card-hover/50 cursor-pointer`}
+                onClick={() => handleSelectPractice(index)}
+              >
+                <div className="w-6 text-secondary-text text-right mr-3 text-sm">
+                  {index + 1}
+                </div>
+                
+                <div className="flex-1">
+                  <div className="flex items-center">
+                    <div 
+                      className={`w-5 h-5 rounded-sm mr-2 flex items-center justify-center border ${
+                        completed[index] 
+                          ? 'bg-spotify-green border-spotify-green' 
+                          : 'border-gray-600 hover:border-gray-400'
+                      } cursor-pointer`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleComplete(index);
+                      }}
+                    >
+                      {completed[index] && <FaCheck className="text-xs text-primary-text" />}
+                    </div>
+                    
+                    <div className={`font-medium text-sm ${
+                      completed[index] ? 'text-secondary-text' : 'text-primary-text'
+                    }`}>
+                      {practice || `Practice ${index + 1}`}
+                    </div>
                   </div>
                 </div>
+                
+                <div className="flex items-center text-secondary-text text-xs">
+                  <FaClock className="mr-1" />
+                  <span>
+                    {index === currentIndex && timeLeft > 0 
+                      ? formatTime(timeLeft) 
+                      : formatTime(durations[index] || 0)}
+                  </span>
+                </div>
               </div>
-              
-              <div className="flex items-center text-secondary-text">
-                <FaClock className="mr-2 text-xs" />
-                <span>
-                  {index === currentIndex && timeLeft > 0 
-                    ? formatTime(timeLeft) 
-                    : formatTime(durations[index] || 0)}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </div>

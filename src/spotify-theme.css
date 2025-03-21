@@ -27,17 +27,13 @@ body {
   color: var(--primary-text);
 }
 
-.app-header {
-  background-color: var(--spotify-darker);
-  padding: 1rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+/* Header removed */
 
 .app-main {
   flex: 1;
   padding: 1.5rem;
+  padding-top: 1rem; /* Reduced top padding */
+  padding-bottom: 5rem; /* Add padding to account for the footer */
   overflow: auto;
   background: linear-gradient(180deg, var(--spotify-darker) 0%, var(--spotify-black) 25%, var(--spotify-black) 100%);
 }
