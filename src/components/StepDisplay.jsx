@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FaPlay, FaPause, FaStop, FaCheck, FaClock } from 'react-icons/fa';
+import { FaPlay, FaPause, FaStop, FaCheck, FaClock, FaTimes } from 'react-icons/fa';
 import useSettingsStore from '../store/settingsStore';
 
 const StepDisplay = ({ step, stepForToday }) => {
@@ -12,7 +12,12 @@ const StepDisplay = ({ step, stepForToday }) => {
   const durations = step?.durations || practices.map(() => 0);
   
   // Get store access
-  const { practiceChecks, setPracticeChecks, alwaysHourlyReminders } = useSettingsStore();
+  const { 
+    practiceChecks, 
+    setPracticeChecks, 
+    alwaysHourlyReminders,
+    setLastPracticeStartDate
+  } = useSettingsStore();
   
   // State for timer
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -151,6 +156,9 @@ const StepDisplay = ({ step, stepForToday }) => {
           setTimeLeft(durations[nextIndex]);
         }
         setIsTimerRunning(true);
+        
+        // Record that practice was started today
+        setLastPracticeStartDate(new Date().toISOString().split('T')[0]);
       } else {
         setIsTimerRunning(false);
       }
@@ -193,6 +201,9 @@ const StepDisplay = ({ step, stepForToday }) => {
     }
   };
   
+  // Check if any practice has a non-zero duration
+  const hasNonZeroDuration = durations.some(duration => duration > 0);
+  
   // Prevent rendering if step data is invalid
   if (!step || !stepId) {
     return (
@@ -213,15 +224,6 @@ const StepDisplay = ({ step, stepForToday }) => {
         )}
         
         <h2 className="text-2xl font-bold text-primary-text mb-2">{stepTitle}</h2>
-        
-        <div className="flex items-center text-secondary-text text-sm">
-          <span className="inline-block h-6 w-6 rounded-full bg-spotify-green mr-2 flex items-center justify-center">
-            <FaCheck className="text-xs text-primary-text" />
-          </span>
-          <span>Step {stepId}</span>
-          <span className="mx-2">•</span>
-          <span>{stepHourly || alwaysHourlyReminders ? 'Hourly Reminders On' : 'Reminders Off'}</span>
-        </div>
       </div>
       
       {/* Zone 2: Step Instructions - Middle scrollable section */}
@@ -236,12 +238,14 @@ const StepDisplay = ({ step, stepForToday }) => {
         {/* Timer controls */}
         <div className="p-4 border-b border-gray-800">
           {!isTimerRunning ? (
-            <button
-              onClick={handleToggleTimer}
-              className="inline-flex items-center px-6 py-2 bg-spotify-green text-primary-text rounded-full hover:bg-spotify-green-hover transition-colors font-bold"
-            >
-              <FaPlay className="mr-2 text-sm" /> Start Practices
-            </button>
+            hasNonZeroDuration ? (
+              <button
+                onClick={handleToggleTimer}
+                className="inline-flex items-center px-6 py-2 bg-spotify-green text-primary-text rounded-full hover:bg-spotify-green-hover transition-colors font-bold"
+              >
+                <FaPlay className="mr-2 text-sm" /> Start Practices
+              </button>
+            ) : null
           ) : (
             <div className="flex items-center gap-2 flex-wrap">
               <button

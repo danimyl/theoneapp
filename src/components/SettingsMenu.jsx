@@ -9,11 +9,13 @@ const SettingsMenu = ({ isOpen, onClose }) => {
     sleepStart,
     setSleepStart,
     sleepEnd,
-    setSleepEnd
+    setSleepEnd,
+    theme,
+    setTheme
   } = useSettingsStore();
 
   if (!isOpen) return null;
-
+  
   return (
     <div
       className="settings-modal"
@@ -35,6 +37,30 @@ const SettingsMenu = ({ isOpen, onClose }) => {
         
         <div className="space-y-5">
           <div className="pb-5 border-b border-gray-800">
+            <h3 className="text-sm uppercase font-bold tracking-wider text-secondary-text mb-4">
+              Display Settings
+            </h3>
+            
+            <div className="flex items-center justify-between py-2 group cursor-pointer mb-4"
+                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              <div>
+                <p className="text-primary-text font-medium">Theme</p>
+                <p className="text-xs text-secondary-text mt-1">
+                  {theme === 'dark' ? 'Dark mode (default)' : 'Light mode'}
+                </p>
+              </div>
+              <div className="flex items-center">
+                {theme === 'dark' ? (
+                  <FaMoon className="text-secondary-text mr-2" />
+                ) : (
+                  <FaSun className="text-secondary-text mr-2" />
+                )}
+                <div className="text-spotify-green text-3xl">
+                  {theme === 'light' ? <FaToggleOn /> : <FaToggleOff className="text-gray-600 group-hover:text-gray-400" />}
+                </div>
+              </div>
+            </div>
+            
             <h3 className="text-sm uppercase font-bold tracking-wider text-secondary-text mb-4">
               Notification Settings
             </h3>
@@ -89,8 +115,15 @@ const SettingsMenu = ({ isOpen, onClose }) => {
               About
             </h3>
             <p className="text-sm text-secondary-text">
-              Steps to Knowledge is a 365-step program designed to develop your connection with 
-              Knowledge, the deeper spiritual mind within you.
+              All contents courtesy of the New Knowledge Library. Experience the complete New Message From God at{' '}
+              <a 
+                href="https://newmessage.org" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-spotify-green hover:text-spotify-green-hover underline"
+              >
+                newmessage.org
+              </a>
             </p>
             <div className="mt-4 flex justify-end">
               <button 

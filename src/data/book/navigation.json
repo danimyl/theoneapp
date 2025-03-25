@@ -1,0 +1,383 @@
+[
+  {
+    "id": "volume-1",
+    "title": "Volume 1: God Has Spoken Again",
+    "books": [
+      {
+        "id": "god-has-spoken-again",
+        "title": "God Has Spoken Again",
+        "url": "/the-message/volume-1/god-spoken-again/",
+        "chapters": [
+          {
+            "id": "the-proclamation",
+            "title": "The Proclamation",
+            "url": "/the-message/volume-1/god-spoken-again/the-proclamation/"
+          },
+          {
+            "id": "the-recitation",
+            "title": "The Recitation",
+            "url": "/the-message/volume-1/god-spoken-again/the-recitation/"
+          },
+          {
+            "id": "the-engagement",
+            "title": "The Engagement",
+            "url": "/the-message/volume-1/god-spoken-again/the-engagement/"
+          },
+          {
+            "id": "god-has-spoken-again-chapter",
+            "title": "God Has Spoken Again",
+            "url": "/the-message/volume-1/god-spoken-again/god-has-spoken-again-chapter/"
+          },
+          {
+            "id": "the-seal-of-the-prophets",
+            "title": "The Seal of the Prophets",
+            "url": "/the-message/volume-1/god-spoken-again/the-seal-of-the-prophets/"
+          },
+          {
+            "id": "the-mission-of-the-messenger",
+            "title": "The Mission of the Messenger",
+            "url": "/the-message/volume-1/god-spoken-again/the-mission-of-the-messenger/"
+          },
+          {
+            "id": "the-initiation",
+            "title": "The Initiation",
+            "url": "/the-message/volume-1/god-spoken-again/the-initiation/"
+          },
+          {
+            "id": "the-blessing",
+            "title": "The Blessing",
+            "url": "/the-message/volume-1/god-spoken-again/the-blessing/"
+          },
+          {
+            "id": "living-at-a-time-of-revelation",
+            "title": "Living at a Time of Revelation",
+            "url": "/the-message/volume-1/god-spoken-again/living-at-a-time-of-revelation/"
+          },
+          {
+            "id": "the-assembly",
+            "title": "The Assembly",
+            "url": "/the-message/volume-1/god-spoken-again/the-assembly/"
+          },
+          {
+            "id": "gods-new-message-for-the-world",
+            "title": "God's New Message for the World",
+            "url": "/the-message/volume-1/god-spoken-again/gods-new-message-for-the-world/"
+          },
+          {
+            "id": "god-is-moving-humanity",
+            "title": "God Is Moving Humanity in a New Direction",
+            "url": "/the-message/volume-1/god-spoken-again/god-is-moving-humanity-in-a-new-direction/"
+          },
+          {
+            "id": "the-world-must-receive",
+            "title": "The World Must Receive God's New Message",
+            "url": "/the-message/volume-1/god-spoken-again/the-world-must-receive-gods-new-message/"
+          },
+          {
+            "id": "the-calling",
+            "title": "The Calling",
+            "url": "/the-message/volume-1/god-spoken-again/the-calling/"
+          }
+        ]
+      },
+      {
+        "id": "the-one-god",
+        "title": "The One God",
+        "url": "/the-message/volume-1/the-one-god/",
+        "chapters": [
+          {
+            "id": "the-one-god-chapter-1",
+            "title": "The Reality of God",
+            "url": "/the-message/volume-1/the-one-god/the-reality-of-god/"
+          },
+          {
+            "id": "the-one-god-chapter-2",
+            "title": "The New God Experience",
+            "url": "/the-message/volume-1/the-one-god/the-new-god-experience/"
+          },
+          {
+            "id": "the-one-god-chapter-3",
+            "title": "The Origin",
+            "url": "/the-message/volume-1/the-one-god/the-origin/"
+          }
+        ]
+      },
+      {
+        "id": "the-new-messenger",
+        "title": "The New Messenger",
+        "url": "/the-message/volume-1/the-new-messenger/",
+        "chapters": [
+          {
+            "id": "the-new-messenger-chapter-1",
+            "title": "The Messenger",
+            "url": "/the-message/volume-1/the-new-messenger/the-messenger/"
+          },
+          {
+            "id": "the-new-messenger-chapter-2",
+            "title": "The Burden of the Messenger",
+            "url": "/the-message/volume-1/the-new-messenger/the-burden-of-the-messenger/"
+          },
+          {
+            "id": "the-new-messenger-chapter-3",
+            "title": "The Lineage of the Messengers",
+            "url": "/the-message/volume-1/the-new-messenger/the-lineage-of-the-messengers/"
+          }
+        ]
+      },
+      {
+        "id": "the-greater-community",
+        "title": "The Greater Community",
+        "url": "/the-message/volume-1/the-greater-community/",
+        "chapters": [
+          {
+            "id": "the-greater-community-chapter-1",
+            "title": "The Reality of the Greater Community",
+            "url": "/the-message/volume-1/the-greater-community/the-reality-of-the-greater-community/"
+          },
+          {
+            "id": "the-greater-community-chapter-2",
+            "title": "Contact with Intelligent Life in the Universe",
+            "url": "/the-message/volume-1/the-greater-community/contact-with-intelligent-life-in-the-universe/"
+          },
+          {
+            "id": "the-greater-community-chapter-3",
+            "title": "Humanity's Destiny",
+            "url": "/the-message/volume-1/the-greater-community/humanitys-destiny/"
+          }
+        ]
+      },
+      {
+        "id": "the-power-of-knowledge",
+        "title": "The Power of Knowledge",
+        "url": "/the-message/volume-1/the-power-of-knowledge/",
+        "chapters": [
+          {
+            "id": "the-power-of-knowledge-chapter-1",
+            "title": "The Meaning of Knowledge",
+            "url": "/the-message/volume-1/the-power-of-knowledge/the-meaning-of-knowledge/"
+          },
+          {
+            "id": "the-power-of-knowledge-chapter-2",
+            "title": "The Voice of Knowledge",
+            "url": "/the-message/volume-1/the-power-of-knowledge/the-voice-of-knowledge/"
+          },
+          {
+            "id": "the-power-of-knowledge-chapter-3",
+            "title": "The Journey to Knowledge",
+            "url": "/the-message/volume-1/the-power-of-knowledge/the-journey-to-knowledge/"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "volume-2",
+    "title": "Volume 2: The One God",
+    "books": [
+      {
+        "id": "god-and-the-angelic-presence",
+        "title": "God and the Angelic Presence",
+        "url": "/the-message/volume-2/god-and-the-angelic-presence/",
+        "chapters": [
+          {
+            "id": "the-angelic-presence",
+            "title": "The Angelic Presence",
+            "url": "/the-message/volume-2/god-and-the-angelic-presence/the-angelic-presence/"
+          },
+          {
+            "id": "the-will-of-heaven",
+            "title": "The Will of Heaven",
+            "url": "/the-message/volume-2/god-and-the-angelic-presence/the-will-of-heaven/"
+          },
+          {
+            "id": "the-voice-of-revelation",
+            "title": "The Voice of Revelation",
+            "url": "/the-message/volume-2/god-and-the-angelic-presence/the-voice-of-revelation/"
+          }
+        ]
+      },
+      {
+        "id": "the-new-god-revelation",
+        "title": "The New God Revelation",
+        "url": "/the-message/volume-2/the-new-god-revelation/",
+        "chapters": [
+          {
+            "id": "the-new-god-revelation-chapter",
+            "title": "The New God Revelation",
+            "url": "/the-message/volume-2/the-new-god-revelation/the-new-god-revelation-chapter/"
+          },
+          {
+            "id": "the-new-god-experience-vol2",
+            "title": "The New God Experience",
+            "url": "/the-message/volume-2/the-new-god-revelation/the-new-god-experience/"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "volume-3",
+    "title": "Volume 3: Life in the Universe",
+    "books": [
+      {
+        "id": "life-in-the-universe",
+        "title": "Life in the Universe",
+        "url": "/the-message/volume-3/life-in-the-universe/",
+        "chapters": [
+          {
+            "id": "life-in-the-universe-chapter",
+            "title": "Life in the Universe",
+            "url": "/the-message/volume-3/life-in-the-universe/life-in-the-universe-chapter/"
+          },
+          {
+            "id": "the-reality-of-contact",
+            "title": "The Reality of Contact",
+            "url": "/the-message/volume-3/life-in-the-universe/the-reality-of-contact/"
+          },
+          {
+            "id": "the-allies-of-humanity",
+            "title": "The Allies of Humanity",
+            "url": "/the-message/volume-3/life-in-the-universe/the-allies-of-humanity/"
+          }
+        ]
+      },
+      {
+        "id": "the-greater-community-vol3",
+        "title": "The Greater Community",
+        "url": "/the-message/volume-3/the-greater-community/",
+        "chapters": [
+          {
+            "id": "entering-the-greater-community",
+            "title": "Entering the Greater Community",
+            "url": "/the-message/volume-3/the-greater-community/entering-the-greater-community/"
+          },
+          {
+            "id": "the-great-waves-of-change",
+            "title": "The Great Waves of Change",
+            "url": "/the-message/volume-3/the-greater-community/the-great-waves-of-change/"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "volume-4",
+    "title": "Volume 4: The Path of the Messenger",
+    "books": [
+      {
+        "id": "the-messenger",
+        "title": "The Messenger",
+        "url": "/the-message/volume-4/the-messenger/",
+        "chapters": [
+          {
+            "id": "the-messenger-chapter",
+            "title": "The Messenger",
+            "url": "/the-message/volume-4/the-messenger/the-messenger-chapter/"
+          },
+          {
+            "id": "the-preparation",
+            "title": "The Preparation",
+            "url": "/the-message/volume-4/the-messenger/the-preparation/"
+          }
+        ]
+      },
+      {
+        "id": "the-mission",
+        "title": "The Mission",
+        "url": "/the-message/volume-4/the-mission/",
+        "chapters": [
+          {
+            "id": "the-mission-chapter",
+            "title": "The Mission",
+            "url": "/the-message/volume-4/the-mission/the-mission-chapter/"
+          },
+          {
+            "id": "the-burden-of-the-messenger-vol4",
+            "title": "The Burden of the Messenger",
+            "url": "/the-message/volume-4/the-mission/the-burden-of-the-messenger/"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "volume-5",
+    "title": "Volume 5: The New World",
+    "books": [
+      {
+        "id": "the-new-world",
+        "title": "The New World",
+        "url": "/the-message/volume-5/the-new-world/",
+        "chapters": [
+          {
+            "id": "the-new-world-chapter",
+            "title": "The New World",
+            "url": "/the-message/volume-5/the-new-world/the-new-world-chapter/"
+          },
+          {
+            "id": "the-great-waves-of-change-vol5",
+            "title": "The Great Waves of Change",
+            "url": "/the-message/volume-5/the-new-world/the-great-waves-of-change/"
+          }
+        ]
+      },
+      {
+        "id": "the-great-faith",
+        "title": "The Great Faith",
+        "url": "/the-message/volume-5/the-great-faith/",
+        "chapters": [
+          {
+            "id": "the-great-faith-chapter",
+            "title": "The Great Faith",
+            "url": "/the-message/volume-5/the-great-faith/the-great-faith-chapter/"
+          },
+          {
+            "id": "the-new-world-community",
+            "title": "The New World Community",
+            "url": "/the-message/volume-5/the-great-faith/the-new-world-community/"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "volume-6",
+    "title": "Volume 6: Wisdom from the Greater Community",
+    "books": [
+      {
+        "id": "wisdom-from-the-greater-community",
+        "title": "Wisdom from the Greater Community",
+        "url": "/the-message/volume-6/wisdom-from-the-greater-community/",
+        "chapters": [
+          {
+            "id": "wisdom-from-the-greater-community-chapter",
+            "title": "Wisdom from the Greater Community",
+            "url": "/the-message/volume-6/wisdom-from-the-greater-community/wisdom-from-the-greater-community-chapter/"
+          },
+          {
+            "id": "greater-community-spirituality",
+            "title": "Greater Community Spirituality",
+            "url": "/the-message/volume-6/wisdom-from-the-greater-community/greater-community-spirituality/"
+          }
+        ]
+      },
+      {
+        "id": "living-the-way-of-knowledge",
+        "title": "Living the Way of Knowledge",
+        "url": "/the-message/volume-6/living-the-way-of-knowledge/",
+        "chapters": [
+          {
+            "id": "living-the-way-of-knowledge-chapter",
+            "title": "Living the Way of Knowledge",
+            "url": "/the-message/volume-6/living-the-way-of-knowledge/living-the-way-of-knowledge-chapter/"
+          },
+          {
+            "id": "relationships-and-higher-purpose",
+            "title": "Relationships and Higher Purpose",
+            "url": "/the-message/volume-6/living-the-way-of-knowledge/relationships-and-higher-purpose/"
+          }
+        ]
+      }
+    ]
+  }
+]

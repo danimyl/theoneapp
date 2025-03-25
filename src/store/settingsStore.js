@@ -21,6 +21,14 @@ const useSettingsStore = create(
             [stepId]: checks,
           },
         })),
+      lastPracticeStartDate: null, // Date when practice was last started (for daily reminder)
+      setLastPracticeStartDate: (date) => set({ lastPracticeStartDate: date }),
+      lastStepAdvanceDate: null, // Date when step was last advanced
+      setLastStepAdvanceDate: (date) => set({ lastStepAdvanceDate: date }),
+      lastSecretShownDate: null, // Date when secret modal was last shown
+      setLastSecretShownDate: (date) => set({ lastSecretShownDate: date }),
+      theme: 'dark', // Default theme is dark
+      setTheme: (theme) => set({ theme }),
     }),
     {
       name: 'settings-storage',
