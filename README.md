@@ -1,12 +1,25 @@
-# React + Vite
+# TheOneApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A cross-platform application for daily spiritual practice and personal development.
 
-Currently, two official plugins are available:
+## Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Web App**: React + Vite application with step tracking, practice timers, and book content
+- **Mobile App**: React Native implementation with feature parity to the web version
+- **Shared Data**: JSON-based content for steps, practices, and book materials
 
-## Expanding the ESLint configuration
+## Key Features
 
-If you are developing a production application, we recommend using TypeScript and enable type-aware lint rules. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- Daily step progression with practice timers
+- Book content with navigation and search
+- Hourly reminders and notifications
+- Settings customization
+- Cross-platform synchronization
+
+## Development
+
+The project is structured to maintain the mobile app downstream from the web app, ensuring feature parity while optimizing for each platform's capabilities.
+
+```
+npm run dev        # Start web development server
+cd TheOneApp_mobile && npm start  # Start mobile development server
