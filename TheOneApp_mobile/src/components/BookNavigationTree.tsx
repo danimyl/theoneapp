@@ -19,9 +19,13 @@ import bookService from '../services/bookService';
 
 interface BookNavigationTreeProps {
   onChapterSelect: () => void;
+  searchQuery?: string;
 }
 
-export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapterSelect }) => {
+export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ 
+  onChapterSelect,
+  searchQuery = ''
+}) => {
   const {
     selectedVolumeId,
     selectedBookId,
@@ -38,8 +42,57 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapte
   const [expandedVolumes, setExpandedVolumes] = useState<Record<string, boolean>>({});
   const [expandedBooks, setExpandedBooks] = useState<Record<string, boolean>>({});
   
-  // Get navigation data and log for debugging
+  // Get navigation data
   const navigation = bookService.getNavigation();
+  
+  // Clean title (remove any unwanted text and format properly)
+  const cleanTitle = (title: string): string => {
+    if (!title) return '';
+    
+    // Remove "Expand" text if present (common in volume titles)
+    let cleanedTitle = title.replace(/Expand$/i, '').trim();
+    
+    // Remove any trailing pipe characters and trim
+    cleanedTitle = cleanedTitle.replace(/\s*\|\s*$/, '').trim();
+    
+    // Remove "Print Book" or "eBook" suffixes that might be in chapter titles
+    cleanedTitle = cleanedTitle.replace(/\s*\|\s*(Print Book|eBook)$/, '').trim();
+    
+    // For debugging
+    if (title !== cleanedTitle) {
+      console.log(`Cleaned title: "${title}" -> "${cleanedTitle}"`);
+    }
+    
+    return cleanedTitle;
+  };
+  
+  // Filter navigation based on search query
+  const filteredNavigation = React.useMemo(() => {
+    if (!searchQuery) return navigation;
+    
+    const query = searchQuery.toLowerCase();
+    
+    return navigation.map(volume => {
+      // Filter books in this volume
+      const filteredBooks = volume.books.map(book => {
+        // Filter chapters in this book
+        const filteredChapters = book.chapters.filter(chapter => {
+          if (!chapter || !chapter.title) return false;
+          return cleanTitle(chapter.title).toLowerCase().includes(query);
+        });
+        
+        return {
+          ...book,
+          chapters: filteredChapters
+        };
+      }).filter(book => book.chapters.length > 0);
+      
+      return {
+        ...volume,
+        books: filteredBooks
+      };
+    }).filter(volume => volume.books.length > 0);
+  }, [navigation, searchQuery]);
   
   // Log navigation data for debugging
   useEffect(() => {
@@ -74,6 +127,26 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapte
       }));
     }
   }, [selectedVolumeId, selectedBookId, navigation]);
+  
+  // Auto-expand volumes and books with search results
+  useEffect(() => {
+    if (searchQuery) {
+      // Create new expanded states for volumes and books with matching results
+      const newExpandedVolumes: Record<string, boolean> = {};
+      const newExpandedBooks: Record<string, boolean> = {};
+      
+      filteredNavigation.forEach(volume => {
+        newExpandedVolumes[volume.id] = true;
+        
+        volume.books.forEach(book => {
+          newExpandedBooks[book.id] = true;
+        });
+      });
+      
+      setExpandedVolumes(prev => ({...prev, ...newExpandedVolumes}));
+      setExpandedBooks(prev => ({...prev, ...newExpandedBooks}));
+    }
+  }, [searchQuery, filteredNavigation]);
 
   // Toggle volume expansion
   const toggleVolume = (volumeId: string) => {
@@ -148,24 +221,6 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapte
     }
   };
 
-  // Clean title (remove any unwanted text and format properly)
-  const cleanTitle = (title: string) => {
-    // Remove "Expand" text if present (common in volume titles)
-    let cleanedTitle = title.replace(/Expand$/i, '').trim();
-    
-    // Remove any trailing pipe characters and trim
-    cleanedTitle = cleanedTitle.replace(/\s*\|\s*$/, '').trim();
-    
-    // Remove "Print Book" or "eBook" suffixes that might be in chapter titles
-    cleanedTitle = cleanedTitle.replace(/\s*\|\s*(Print Book|eBook)$/, '').trim();
-    
-    // For debugging
-    if (title !== cleanedTitle) {
-      console.log(`Cleaned title: "${title}" -> "${cleanedTitle}"`);
-    }
-    
-    return cleanedTitle;
-  };
 
   // Extract chapter ID from URL
   const extractIdFromUrl = (url: string): string => {
@@ -185,12 +240,51 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapte
     }
   };
 
+  // Highlight matching text in search results
+  const highlightMatch = (text: string, query: string): React.ReactNode => {
+    if (!query || !text) return text || '';
+    
+    const cleanedText = cleanTitle(text);
+    const lowerText = cleanedText.toLowerCase();
+    const lowerQuery = query.toLowerCase();
+    
+    if (!lowerText.includes(lowerQuery)) return cleanedText;
+    
+    const parts = [];
+    let lastIndex = 0;
+    let index = lowerText.indexOf(lowerQuery);
+    
+    while (index !== -1) {
+      // Add text before match
+      if (index > lastIndex) {
+        parts.push(cleanedText.substring(lastIndex, index));
+      }
+      
+      // Add highlighted match
+      parts.push(
+        <Text key={index} style={styles.highlightedText}>
+          {cleanedText.substring(index, index + lowerQuery.length)}
+        </Text>
+      );
+      
+      lastIndex = index + lowerQuery.length;
+      index = lowerText.indexOf(lowerQuery, lastIndex);
+    }
+    
+    // Add remaining text
+    if (lastIndex < cleanedText.length) {
+      parts.push(cleanedText.substring(lastIndex));
+    }
+    
+    return parts;
+  };
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>The One Book</Text>
       
-      {navigation.length > 0 ? (
-        navigation.map(volume => (
+      {filteredNavigation.length > 0 ? (
+        filteredNavigation.map(volume => (
           <View key={volume.id} style={styles.volumeContainer}>
             {/* Volume header */}
             <TouchableOpacity 
@@ -249,7 +343,10 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapte
                               numberOfLines={2}
                               ellipsizeMode="tail"
                             >
-                              {cleanTitle(chapter.title)}
+                              {searchQuery ? 
+                                highlightMatch(chapter.title, searchQuery) : 
+                                cleanTitle(chapter.title)
+                              }
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -263,9 +360,15 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({ onChapte
         ))
       ) : (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>
-            No book data available. Please run the sync-book-data.mjs script to populate book content.
-          </Text>
+          {searchQuery ? (
+            <Text style={styles.emptyText}>
+              No chapters found matching "{searchQuery}".
+            </Text>
+          ) : (
+            <Text style={styles.emptyText}>
+              No book data available. Please run the sync-book-data.mjs script to populate book content.
+            </Text>
+          )}
         </View>
       )}
     </ScrollView>
@@ -345,6 +448,11 @@ const styles = StyleSheet.create({
   },
   selectedChapterText: {
     color: '#1DB954',
+  },
+  highlightedText: {
+    backgroundColor: 'rgba(29, 185, 84, 0.3)', // Spotify green with transparency
+    color: '#1DB954',
+    fontWeight: 'bold',
   },
   emptyContainer: {
     padding: 20,

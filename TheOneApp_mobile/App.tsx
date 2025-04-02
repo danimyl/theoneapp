@@ -216,6 +216,7 @@ export default function App() {
             name="Book" 
             component={BookScreen}
             options={{
+              headerShown: false, // Hide the header completely
               tabBarIcon: ({ color, size }: { color: string; size: number }) => (
                 <Ionicons name="book" size={size} color={color} />
               ),

@@ -26,6 +26,9 @@ interface BookState {
   // Text size preference
   textSize: number;
   
+  // Search query for chapter filtering
+  searchQuery: string;
+  
   // Audio playback state
   isAudioPlaying: boolean;
   isAudioLoading: boolean;
@@ -43,6 +46,7 @@ interface BookState {
   setError: (error: string | null) => void;
   setTextSize: (size: number) => void;
   resetError: () => void;
+  setSearchQuery: (query: string) => void;
   
   // Audio control actions
   setIsAudioPlaying: (isPlaying: boolean) => void;
@@ -63,6 +67,7 @@ const useBookStore = create<BookState>()(
       isLoading: false,
       error: null,
       textSize: 16, // Default text size in pixels
+      searchQuery: '', // Initial empty search query
       
       // Audio state
       isAudioPlaying: false,
@@ -117,6 +122,9 @@ const useBookStore = create<BookState>()(
         
       setTextSize: (size) => 
         set({ textSize: size }),
+      
+      setSearchQuery: (query) =>
+        set({ searchQuery: query }),
         
       // Audio control actions
       setIsAudioPlaying: (isPlaying) => 
