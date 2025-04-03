@@ -547,10 +547,17 @@ export const StepsScreen = () => {
   }, [completed, step, setPracticeChecks]);
   
   // Handle timer completion
-  const handleTimerComplete = () => {
+  const handleTimerComplete = async () => {
     if (currentIndex >= 0 && step) {
-      // Play completion sound
-      playCompletionSound();
+      try {
+        // Try direct sound playback first (for immediate feedback when app is in foreground)
+        playCompletionSound();
+        
+        // Also send a notification sound that works when device is locked
+        await notificationService.sendTimerCompletionSound();
+      } catch (error) {
+        console.error('[STEPS] Error playing completion sound:', error);
+      }
       
       // Mark the practice as completed
       const newCompleted = [...completed];
@@ -576,6 +583,9 @@ export const StepsScreen = () => {
   
   // Reference to store the current duration for use in callbacks
   const currentDurationRef = useRef<number>(0);
+  
+  // Reference to track when the timer started (for iOS)
+  const timerStartTimeRef = useRef<number>(0);
   
   // Track if we need to start a timer
   const shouldStartTimerRef = useRef<{
@@ -634,6 +644,12 @@ export const StepsScreen = () => {
       // Only start if we're not already restoring a timer
       if (!shouldRestoreTimerRef.current.shouldRestore) {
         console.log('[STEPS] Starting new timer with duration:', duration);
+        
+        // Record the timer start time for iOS
+        if (Platform.OS === 'ios') {
+          timerStartTimeRef.current = Date.now();
+          console.log('[STEPS] iOS: Recording timer start time:', timerStartTimeRef.current);
+        }
         
         // Use the combined resetAndStart function to avoid timing issues
         resetAndStart(duration);
@@ -714,12 +730,39 @@ export const StepsScreen = () => {
       return;
     }
     
-    if (!isRunning && activeTimerStepId === stepId) {
-      // Only clear if we're on the active timer step and the timer is not running
-      // and we're not in the process of restoring a timer
-      // and the timer is not paused
-      console.log('[STEPS] Timer stopped, clearing global timer state');
-      clearActiveTimer();
+    // Platform-specific handling
+    if (Platform.OS === 'ios') {
+      // iOS-specific code path with additional safeguards
+      if (!isRunning && activeTimerStepId === stepId) {
+        // Add debounce and validation for iOS
+        const now = Date.now();
+        const timerStartTime = timerStartTimeRef.current || 0;
+        const timeSinceStart = now - timerStartTime;
+        const hasRunLongEnough = timeSinceStart > 1000; // 1 second minimum
+        
+        if (hasRunLongEnough) {
+          console.log('[STEPS] iOS: Timer stopped and ran long enough, clearing global timer state', {
+            timeSinceStart,
+            hasRunLongEnough
+          });
+          clearActiveTimer();
+        } else {
+          console.log('[STEPS] iOS: Timer stopped too soon, preserving timer state', {
+            timeSinceStart,
+            hasRunLongEnough
+          });
+          // Don't clear the timer state on iOS if it hasn't run long enough
+        }
+      }
+    } else {
+      // Original Android code path - unchanged
+      if (!isRunning && activeTimerStepId === stepId) {
+        // Only clear if we're on the active timer step and the timer is not running
+        // and we're not in the process of restoring a timer
+        // and the timer is not paused
+        console.log('[STEPS] Timer stopped, clearing global timer state');
+        clearActiveTimer();
+      }
     }
   }, [isRunning, activeTimerStepId, stepId, isPaused, activeTimerIsPaused, clearActiveTimer]);
   
@@ -912,6 +955,12 @@ export const StepsScreen = () => {
         // Calculate the end time based on the current time and pausedTimeLeft
         const now = Date.now();
         const endTime = now + (pausedTimeLeft * 1000);
+        
+        // Record the timer start time for iOS
+        if (Platform.OS === 'ios') {
+          timerStartTimeRef.current = now;
+          console.log('[STEPS] iOS: Recording timer resume time:', timerStartTimeRef.current);
+        }
         
         // Update the global timer state with the current step ID
         setActiveTimer(stepId, currentIndex, pausedTimeLeft);

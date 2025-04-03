@@ -730,6 +730,49 @@ const notificationService = {
    * Test notification functionality
    * @returns {Promise<string>} Test status message
    */
+  /**
+   * Send a timer completion sound that works even when device is locked
+   * Uses high-priority notification channel for exact timing
+   * @returns {Promise<void>}
+   */
+  async sendTimerCompletionSound(): Promise<void> {
+    try {
+      // For Android, use the high-priority channel with alarm clock priority
+      if (Platform.OS === 'android') {
+        await Notifications.presentNotificationAsync({
+          content: {
+            title: '', // Empty title for silent notification
+            body: '',  // Empty body for silent notification
+            sound: 'bell.mp3',
+            android: {
+              channelId: 'hourly-reminders', // Use our high-priority channel
+              priority: 'max',
+              alarmClock: true, // Ensures exact timing
+              sound: 'bell.mp3',
+              vibrate: false, // No vibration, just sound
+              showWhen: false, // Don't show timestamp
+            }
+          }
+        } as any);
+      } else {
+        // For iOS, use a silent notification with sound
+        await Notifications.presentNotificationAsync({
+          content: {
+            title: '', // Empty title for silent notification
+            body: '',  // Empty body for silent notification
+            sound: true, // Use default sound on iOS
+            badge: null, // No badge number
+            ios: {
+              _displayInForeground: false // Hide visual notification
+            }
+          }
+        } as any);
+      }
+    } catch (error) {
+      console.error('[NOTIFICATION] Error playing timer completion sound:', error);
+    }
+  },
+
   async testNotifications(): Promise<string> {
     try {
       console.log('[TEST] Starting notification test sequence');
