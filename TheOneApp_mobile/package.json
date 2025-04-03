@@ -1,6 +1,6 @@
 {
   "name": "theoneapp",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "main": "index.ts",
   "expo": {
     "doctor": {
@@ -22,11 +22,13 @@
   "dependencies": {
     "@expo/vector-icons": "14.0.4",
     "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-native-community/slider": "^4.5.6",
     "@react-navigation/bottom-tabs": "7.3.2",
     "@react-navigation/native": "7.1.0",
     "expo": "~52.0.42",
     "expo-av": "15.0.2",
     "expo-background-fetch": "~13.0.5",
+    "expo-dev-client": "~5.0.17",
     "expo-document-picker": "13.0.3",
     "expo-file-system": "18.0.12",
     "expo-haptics": "~14.0.1",
@@ -49,8 +51,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-vector-icons": "10.2.0",
     "typescript": "5.3.3",
-    "zustand": "5.0.3",
-    "expo-dev-client": "~5.0.17"
+    "zustand": "5.0.3"
   },
   "devDependencies": {
     "@testing-library/react-native": "12.4.0",

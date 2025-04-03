@@ -2,6 +2,15 @@
 
 This document tracks significant changes and updates to the mobile app.
 
+## Version 1.1.2 (2025-04-02)
+
+### Notification System Improvements
+- Enhanced hourly notification precision with exact timing at xx:00
+- Added dedicated high-priority notification channel for hourly reminders
+- Improved notification reliability in background mode
+- Optimized sound handling for notifications
+- Added alarm clock priority for critical notifications on Android
+
 ## Version 1.0.5 (2025-04-02)
 
 ### Audio Player Improvements
