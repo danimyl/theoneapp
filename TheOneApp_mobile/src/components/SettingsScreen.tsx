@@ -24,9 +24,13 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSettingsStore } from '../store/settingsStore';
+import { useTheme } from '../contexts/ThemeContext';
 
 export const SettingsScreen: React.FC = () => {
+  const { theme } = useTheme();
   const { 
+    isDarkMode,
+    setIsDarkMode,
     alwaysHourlyReminders, 
     setAlwaysHourlyReminders,
     sleepStart,
@@ -130,81 +134,113 @@ export const SettingsScreen: React.FC = () => {
   
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <Text style={styles.title}>Settings</Text>
+      <ScrollView style={[styles.scrollView, { backgroundColor: theme.bgPrimary }]}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Settings</Text>
+        
+        {/* Appearance Settings Section */}
+        <View style={[styles.section, { backgroundColor: theme.bgCard }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Appearance</Text>
+          
+          {/* Theme Toggle */}
+          <View style={[styles.settingRow, { borderBottomColor: theme.borderColor }]}>
+            <View style={styles.settingLabelContainer}>
+              <MaterialIcons 
+                name={isDarkMode ? "dark-mode" : "light-mode"} 
+                size={24} 
+                color={theme.accent} 
+                style={styles.icon} 
+              />
+              <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>
+                Dark Mode
+              </Text>
+            </View>
+            <Switch
+              value={isDarkMode}
+              onValueChange={setIsDarkMode}
+              trackColor={{ false: '#767577', true: theme.buttonAccent }}
+              thumbColor={Platform.OS === 'ios' ? undefined : (isDarkMode ? '#ffffff' : '#f4f3f4')}
+            />
+          </View>
+          
+          <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+            Switch between dark and light themes
+          </Text>
+        </View>
         
         {/* Notification Settings Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
+        <View style={[styles.section, { backgroundColor: theme.bgCard }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Notifications</Text>
           
           {/* Hourly Reminders Toggle */}
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: theme.borderColor }]}>
             <View style={styles.settingLabelContainer}>
-              <MaterialIcons name="notifications" size={24} color="#1DB954" style={styles.icon} />
-              <Text style={styles.settingLabel}>Always Show Hourly Reminders</Text>
+              <MaterialIcons name="notifications" size={24} color={theme.accent} style={styles.icon} />
+              <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>
+                Always Show Hourly Reminders
+              </Text>
             </View>
             <Switch
               value={alwaysHourlyReminders}
               onValueChange={setAlwaysHourlyReminders}
-              trackColor={{ false: '#767577', true: '#1DB954' }}
+              trackColor={{ false: '#767577', true: theme.buttonAccent }}
               thumbColor={Platform.OS === 'ios' ? undefined : (alwaysHourlyReminders ? '#ffffff' : '#f4f3f4')}
             />
           </View>
           
-          <Text style={styles.settingDescription}>
+          <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
             When enabled, hourly reminders will be shown for all steps, not just those marked as hourly.
           </Text>
         </View>
         
         {/* Quiet Hours Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quiet Hours</Text>
-          <Text style={styles.settingDescription}>
+        <View style={[styles.section, { backgroundColor: theme.bgCard }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Quiet Hours</Text>
+          <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
             Notifications will be silenced during these hours
           </Text>
           
           {/* Sleep Start Time */}
           <TouchableOpacity 
-            style={styles.settingRow}
+            style={[styles.settingRow, { borderBottomColor: theme.borderColor }]}
             onPress={openStartTimePicker}
           >
             <View style={styles.settingLabelContainer}>
-              <MaterialIcons name="bedtime" size={24} color="#1DB954" style={styles.icon} />
-              <Text style={styles.settingLabel}>Start Time</Text>
+              <MaterialIcons name="bedtime" size={24} color={theme.accent} style={styles.icon} />
+              <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Start Time</Text>
             </View>
-            <Text style={styles.timeText}>{sleepStart}</Text>
+            <Text style={[styles.timeText, { color: theme.accent }]}>{sleepStart}</Text>
           </TouchableOpacity>
           
           {/* Sleep End Time */}
           <TouchableOpacity 
-            style={styles.settingRow}
+            style={[styles.settingRow, { borderBottomColor: theme.borderColor }]}
             onPress={openEndTimePicker}
           >
             <View style={styles.settingLabelContainer}>
-              <MaterialIcons name="wb-sunny" size={24} color="#1DB954" style={styles.icon} />
-              <Text style={styles.settingLabel}>End Time</Text>
+              <MaterialIcons name="wb-sunny" size={24} color={theme.accent} style={styles.icon} />
+              <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>End Time</Text>
             </View>
-            <Text style={styles.timeText}>{sleepEnd}</Text>
+            <Text style={[styles.timeText, { color: theme.accent }]}>{sleepEnd}</Text>
           </TouchableOpacity>
         </View>
         
         {/* Practice Reminder Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Practice Reminder</Text>
-          <Text style={styles.settingDescription}>
+        <View style={[styles.section, { backgroundColor: theme.bgCard }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Practice Reminder</Text>
+          <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
             Get a reminder if your practices are not completed by the specified time
           </Text>
           
           {/* Practice Reminder Toggle */}
-          <View style={styles.settingRow}>
+          <View style={[styles.settingRow, { borderBottomColor: theme.borderColor }]}>
             <View style={styles.settingLabelContainer}>
-              <MaterialIcons name="notifications-active" size={24} color="#1DB954" style={styles.icon} />
-              <Text style={styles.settingLabel}>Enable Practice Reminder</Text>
+              <MaterialIcons name="notifications-active" size={24} color={theme.accent} style={styles.icon} />
+              <Text style={[styles.settingLabel, { color: theme.textPrimary }]}>Enable Practice Reminder</Text>
             </View>
             <Switch
               value={practiceReminderEnabled}
               onValueChange={setPracticeReminderEnabled}
-              trackColor={{ false: '#767577', true: '#1DB954' }}
+              trackColor={{ false: '#767577', true: theme.buttonAccent }}
               thumbColor={Platform.OS === 'ios' ? undefined : (practiceReminderEnabled ? '#ffffff' : '#f4f3f4')}
             />
           </View>
@@ -213,21 +249,24 @@ export const SettingsScreen: React.FC = () => {
           <TouchableOpacity 
             style={[
               styles.settingRow,
-              !practiceReminderEnabled && styles.settingRowDisabled
+              { borderBottomColor: theme.borderColor },
+              !practiceReminderEnabled && { opacity: 0.5 }
             ]}
             onPress={openReminderTimePicker}
             disabled={!practiceReminderEnabled}
           >
             <View style={styles.settingLabelContainer}>
-              <MaterialIcons name="access-time" size={24} color="#1DB954" style={styles.icon} />
+              <MaterialIcons name="access-time" size={24} color={theme.accent} style={styles.icon} />
               <Text style={[
                 styles.settingLabel,
-                !practiceReminderEnabled && styles.settingLabelDisabled
+                { color: theme.textPrimary },
+                !practiceReminderEnabled && { color: theme.textDisabled }
               ]}>Reminder Time</Text>
             </View>
             <Text style={[
               styles.timeText,
-              !practiceReminderEnabled && styles.timeTextDisabled
+              { color: theme.accent },
+              !practiceReminderEnabled && { color: theme.textDisabled }
             ]}>{practiceReminderTime}</Text>
           </TouchableOpacity>
         </View>
@@ -239,53 +278,63 @@ export const SettingsScreen: React.FC = () => {
           animationType="fade"
           onRequestClose={() => setShowStartPicker(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Set Start Time</Text>
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.bgModal }]}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Start Time</Text>
               
               <View style={styles.timeInputContainer}>
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Hours</Text>
+                  <Text style={[styles.timeInputLabel, { color: theme.textSecondary }]}>Hours</Text>
                   <TextInput
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { 
+                      backgroundColor: theme.bgInput,
+                      color: theme.textPrimary,
+                      borderColor: theme.borderColor,
+                      borderWidth: 1
+                    }]}
                     value={tempHours}
                     onChangeText={setTempHours}
                     keyboardType="number-pad"
                     maxLength={2}
                     placeholder="00"
-                    placeholderTextColor="#666666"
+                    placeholderTextColor={theme.textDisabled}
                   />
                 </View>
                 
-                <Text style={styles.timeSeparator}>:</Text>
+                <Text style={[styles.timeSeparator, { color: theme.textPrimary }]}>:</Text>
                 
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Minutes</Text>
+                  <Text style={[styles.timeInputLabel, { color: theme.textSecondary }]}>Minutes</Text>
                   <TextInput
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { 
+                      backgroundColor: theme.bgInput,
+                      color: theme.textPrimary,
+                      borderColor: theme.borderColor,
+                      borderWidth: 1
+                    }]}
                     value={tempMinutes}
                     onChangeText={setTempMinutes}
                     keyboardType="number-pad"
                     maxLength={2}
                     placeholder="00"
-                    placeholderTextColor="#666666"
+                    placeholderTextColor={theme.textDisabled}
                   />
                 </View>
               </View>
               
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
+                  style={[styles.modalButton, { backgroundColor: theme.buttonSecondary }]}
                   onPress={() => setShowStartPicker(false)}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={[styles.modalButtonText, { color: theme.textPrimary }]}>Cancel</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton]}
+              style={[styles.modalButton, { backgroundColor: theme.buttonAccent }]}
                   onPress={saveStartTime}
                 >
-                  <Text style={styles.modalButtonText}>Save</Text>
+                  <Text style={[styles.modalButtonText, { color: isDarkMode ? '#ffffff' : '#333333' }]}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -298,53 +347,63 @@ export const SettingsScreen: React.FC = () => {
           animationType="fade"
           onRequestClose={() => setShowEndPicker(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Set End Time</Text>
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.bgModal }]}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set End Time</Text>
               
               <View style={styles.timeInputContainer}>
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Hours</Text>
+                  <Text style={[styles.timeInputLabel, { color: theme.textSecondary }]}>Hours</Text>
                   <TextInput
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { 
+                      backgroundColor: theme.bgInput,
+                      color: theme.textPrimary,
+                      borderColor: theme.borderColor,
+                      borderWidth: 1
+                    }]}
                     value={tempHours}
                     onChangeText={setTempHours}
                     keyboardType="number-pad"
                     maxLength={2}
                     placeholder="00"
-                    placeholderTextColor="#666666"
+                    placeholderTextColor={theme.textDisabled}
                   />
                 </View>
                 
-                <Text style={styles.timeSeparator}>:</Text>
+                <Text style={[styles.timeSeparator, { color: theme.textPrimary }]}>:</Text>
                 
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Minutes</Text>
+                  <Text style={[styles.timeInputLabel, { color: theme.textSecondary }]}>Minutes</Text>
                   <TextInput
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { 
+                      backgroundColor: theme.bgInput,
+                      color: theme.textPrimary,
+                      borderColor: theme.borderColor,
+                      borderWidth: 1
+                    }]}
                     value={tempMinutes}
                     onChangeText={setTempMinutes}
                     keyboardType="number-pad"
                     maxLength={2}
                     placeholder="00"
-                    placeholderTextColor="#666666"
+                    placeholderTextColor={theme.textDisabled}
                   />
                 </View>
               </View>
               
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
+                  style={[styles.modalButton, { backgroundColor: theme.buttonSecondary }]}
                   onPress={() => setShowEndPicker(false)}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={[styles.modalButtonText, { color: theme.textPrimary }]}>Cancel</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton]}
+              style={[styles.modalButton, { backgroundColor: theme.buttonAccent }]}
                   onPress={saveEndTime}
                 >
-                  <Text style={styles.modalButtonText}>Save</Text>
+                  <Text style={[styles.modalButtonText, { color: isDarkMode ? '#ffffff' : '#333333' }]}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -357,53 +416,63 @@ export const SettingsScreen: React.FC = () => {
           animationType="fade"
           onRequestClose={() => setShowReminderPicker(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Set Reminder Time</Text>
+          <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]}>
+            <View style={[styles.modalContent, { backgroundColor: theme.bgModal }]}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Reminder Time</Text>
               
               <View style={styles.timeInputContainer}>
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Hours</Text>
+                  <Text style={[styles.timeInputLabel, { color: theme.textSecondary }]}>Hours</Text>
                   <TextInput
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { 
+                      backgroundColor: theme.bgInput,
+                      color: theme.textPrimary,
+                      borderColor: theme.borderColor,
+                      borderWidth: 1
+                    }]}
                     value={tempHours}
                     onChangeText={setTempHours}
                     keyboardType="number-pad"
                     maxLength={2}
                     placeholder="00"
-                    placeholderTextColor="#666666"
+                    placeholderTextColor={theme.textDisabled}
                   />
                 </View>
                 
-                <Text style={styles.timeSeparator}>:</Text>
+                <Text style={[styles.timeSeparator, { color: theme.textPrimary }]}>:</Text>
                 
                 <View style={styles.timeInputGroup}>
-                  <Text style={styles.timeInputLabel}>Minutes</Text>
+                  <Text style={[styles.timeInputLabel, { color: theme.textSecondary }]}>Minutes</Text>
                   <TextInput
-                    style={styles.timeInput}
+                    style={[styles.timeInput, { 
+                      backgroundColor: theme.bgInput,
+                      color: theme.textPrimary,
+                      borderColor: theme.borderColor,
+                      borderWidth: 1
+                    }]}
                     value={tempMinutes}
                     onChangeText={setTempMinutes}
                     keyboardType="number-pad"
                     maxLength={2}
                     placeholder="00"
-                    placeholderTextColor="#666666"
+                    placeholderTextColor={theme.textDisabled}
                   />
                 </View>
               </View>
               
               <View style={styles.modalButtons}>
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.cancelButton]}
+                  style={[styles.modalButton, { backgroundColor: theme.buttonSecondary }]}
                   onPress={() => setShowReminderPicker(false)}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={[styles.modalButtonText, { color: theme.textPrimary }]}>Cancel</Text>
                 </TouchableOpacity>
                 
                 <TouchableOpacity
-                  style={[styles.modalButton, styles.saveButton]}
+              style={[styles.modalButton, { backgroundColor: theme.buttonAccent }]}
                   onPress={saveReminderTime}
                 >
-                  <Text style={styles.modalButtonText}>Save</Text>
+                  <Text style={[styles.modalButtonText, { color: isDarkMode ? '#ffffff' : '#333333' }]}>Save</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -417,7 +486,6 @@ export const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
   },
   scrollView: {
     flex: 1,
@@ -426,19 +494,16 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#ffffff',
     marginBottom: 24,
   },
   section: {
     marginBottom: 24,
-    backgroundColor: '#1e1e1e',
     borderRadius: 8,
     padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ffffff',
     marginBottom: 16,
   },
   settingRow: {
@@ -447,7 +512,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#333333',
   },
   settingLabelContainer: {
     flexDirection: 'row',
@@ -459,40 +523,26 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
-    color: '#ffffff',
     flex: 1,
   },
   settingDescription: {
     fontSize: 14,
-    color: '#999999',
     marginTop: 8,
     marginBottom: 16,
   },
   timeText: {
     fontSize: 16,
-    color: '#1DB954',
     fontWeight: 'bold',
-  },
-  settingRowDisabled: {
-    opacity: 0.5,
-  },
-  settingLabelDisabled: {
-    color: '#999999',
-  },
-  timeTextDisabled: {
-    color: '#999999',
   },
   
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: '#1e1e1e',
     borderRadius: 8,
     padding: 20,
     width: '100%',
@@ -501,7 +551,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#ffffff',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -515,13 +564,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   timeInputLabel: {
-    color: '#999999',
     fontSize: 14,
     marginBottom: 8,
   },
   timeInput: {
-    backgroundColor: '#333333',
-    color: '#ffffff',
     fontSize: 24,
     fontWeight: 'bold',
     paddingHorizontal: 16,
@@ -531,7 +577,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   timeSeparator: {
-    color: '#ffffff',
     fontSize: 24,
     fontWeight: 'bold',
     marginHorizontal: 10,
@@ -547,14 +592,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 5,
   },
-  cancelButton: {
-    backgroundColor: '#555555',
-  },
-  saveButton: {
-    backgroundColor: '#1DB954',
-  },
   modalButtonText: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
   },

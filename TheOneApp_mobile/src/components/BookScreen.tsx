@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   View, 
   Modal, 
@@ -23,6 +24,7 @@ import { BookContentScreen } from './BookContentScreen';
 import useBookStore from '../store/bookStore';
 
 export const BookScreen = () => {
+  const { theme, isDark } = useTheme();
   const [isNavigationVisible, setNavigationVisible] = useState(false);
   const { closeBookDrawer, searchQuery, setSearchQuery } = useBookStore();
   
@@ -35,11 +37,11 @@ export const BookScreen = () => {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
       {/* Status bar with proper configuration */}
       <StatusBar 
-        barStyle="light-content" 
-        backgroundColor="#121212"
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.bgPrimary}
         translucent={false}
       />
       
@@ -53,18 +55,21 @@ export const BookScreen = () => {
         visible={isNavigationVisible}
         onRequestClose={closeNavigation}
       >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.navigationContainer}>
-            <View style={styles.header}>
+        <SafeAreaView style={[styles.modalContainer, { backgroundColor: 'rgba(0, 0, 0, 0.7)' }]}>
+          <View style={[styles.navigationContainer, { 
+            backgroundColor: theme.bgCard,
+            borderRightColor: theme.borderColor 
+          }]}>
+            <View style={[styles.header, { borderBottomColor: theme.borderColor }]}>
               <TouchableOpacity onPress={closeNavigation} style={styles.closeButton}>
-                <Text style={styles.closeButtonText}>✕</Text>
+                <Text style={[styles.closeButtonText, { color: theme.textPrimary }]}>✕</Text>
               </TouchableOpacity>
-              <View style={styles.searchContainer}>
-                <MaterialIcons name="search" size={20} color="#999999" />
+              <View style={[styles.searchContainer, { backgroundColor: theme.bgInput }]}>
+                <MaterialIcons name="search" size={20} color={theme.textSecondary} />
                 <TextInput
-                  style={styles.searchInput}
+                  style={[styles.searchInput, { color: theme.textPrimary }]}
                   placeholder="Search chapters..."
-                  placeholderTextColor="#999999"
+                  placeholderTextColor={theme.textDisabled}
                   value={searchQuery}
                   onChangeText={setSearchQuery}
                   autoCapitalize="none"
@@ -75,7 +80,7 @@ export const BookScreen = () => {
                     onPress={() => setSearchQuery('')}
                     style={styles.clearButton}
                   >
-                    <MaterialIcons name="clear" size={20} color="#999999" />
+                    <MaterialIcons name="clear" size={20} color={theme.textSecondary} />
                   </TouchableOpacity>
                 )}
               </View>

@@ -6,7 +6,8 @@
  * Includes an audio player in the header when audio is available.
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, memo } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   View, 
   Text, 
@@ -20,15 +21,27 @@ import {
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import useBookStore from '../store/bookStore';
+import useAudioStore from '../store/audioStore';
 import bookService from '../services/bookService';
 import AudioPlayer from './audio/AudioPlayer';
 import CustomHtmlRenderer from './CustomHtmlRenderer';
+
+// Memoized AudioPlayer with custom comparison to prevent unnecessary re-renders
+const MemoizedAudioPlayer = memo(AudioPlayer, (prevProps, nextProps) => {
+  // Only re-render if audioUrl changes
+  console.log('AudioPlayer props comparison:', 
+    'prev:', prevProps.audioUrl, 
+    'next:', nextProps.audioUrl, 
+    'equal:', prevProps.audioUrl === nextProps.audioUrl);
+  return prevProps.audioUrl === nextProps.audioUrl;
+});
 
 interface BookContentScreenProps {
   openDrawer: () => void;
 }
 
 export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer }) => {
+  const { theme, isDark } = useTheme();
   const {
     selectedVolumeId,
     selectedBookId,
@@ -39,6 +52,9 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
     textSize,
     setTextSize
   } = useBookStore();
+  
+  // Get resetAudioState from audioStore to reset audio state when content changes
+  const resetAudioState = useAudioStore(state => state.resetAudioState);
   
   const { width } = useWindowDimensions();
   
@@ -61,6 +77,11 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
 
   const { volumeTitle, bookTitle, chapterTitle } = getCurrentChapterInfo();
   
+  // Reset audio state when content changes
+  useEffect(() => {
+    resetAudioState();
+  }, [currentContent, resetAudioState]);
+  
   // Memoize the renderersProps object to prevent unnecessary rerenders
   const renderersProps = useMemo(() => ({
     a: {
@@ -77,14 +98,20 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
     Linking.openURL(url).catch(err => console.error('Error opening URL:', err));
   };
   
+  // Add render logging
+  console.log('BookContentScreen rendering');
+  
   // If no content is selected, show a welcome message
   if (!currentContent) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
         {/* Header with app title and menu button */}
-        <View style={styles.header}>
+        <View style={[styles.header, { 
+          backgroundColor: theme.bgCard,
+          borderBottomColor: theme.borderColor 
+        }]}>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>The One Book</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>The One Book</Text>
           </View>
           <View style={styles.controls}>
             <TouchableOpacity
@@ -93,24 +120,24 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
               accessibilityLabel="Open navigation menu"
               accessibilityHint="Opens the book navigation menu"
             >
-              <MaterialIcons name="menu" size={24} color="#FFFFFF" />
+              <MaterialIcons name="menu" size={24} color={theme.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
         
-        <View style={styles.welcomeCard}>
-          <Text style={styles.welcomeTitle}>Welcome to The One Book</Text>
-          <Text style={styles.welcomeText}>
+        <View style={[styles.welcomeCard, { backgroundColor: theme.bgCard }]}>
+          <Text style={[styles.welcomeTitle, { color: theme.textPrimary }]}>Welcome to The One Book</Text>
+          <Text style={[styles.welcomeText, { color: theme.textSecondary }]}>
             Select a chapter from the menu to begin reading.
           </Text>
           <TouchableOpacity
-            style={styles.menuButton}
+            style={[styles.menuButton, { backgroundColor: theme.buttonAccent }]}
             onPress={openDrawer}
             accessibilityLabel="Open book navigation"
             accessibilityHint="Opens the book navigation menu to select chapters"
           >
-            <MaterialIcons name="menu" size={20} color="#FFFFFF" />
-            <Text style={styles.menuButtonText}>Open Book Menu</Text>
+            <MaterialIcons name="menu" size={20} color={isDark ? '#FFFFFF' : '#333333'} />
+            <Text style={[styles.menuButtonText, { color: isDark ? '#FFFFFF' : '#333333' }]}>Open Book Menu</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -120,11 +147,14 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
   // If loading, show a loading indicator
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
         {/* Header with app title and menu button */}
-        <View style={styles.header}>
+        <View style={[styles.header, { 
+          backgroundColor: theme.bgCard,
+          borderBottomColor: theme.borderColor 
+        }]}>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>The One Book</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>The One Book</Text>
           </View>
           <View style={styles.controls}>
             <TouchableOpacity
@@ -133,14 +163,14 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
               accessibilityLabel="Open navigation menu"
               accessibilityHint="Opens the book navigation menu"
             >
-              <MaterialIcons name="menu" size={24} color="#FFFFFF" />
+              <MaterialIcons name="menu" size={24} color={theme.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
         
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#1DB954" />
-          <Text style={styles.loadingText}>Loading content...</Text>
+        <View style={[styles.loadingContainer, { backgroundColor: theme.bgPrimary }]}>
+          <ActivityIndicator size="large" color={theme.accent} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>Loading content...</Text>
         </View>
       </SafeAreaView>
     );
@@ -149,11 +179,14 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
   // If there's an error, show an error message
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
         {/* Header with app title and menu button */}
-        <View style={styles.header}>
+        <View style={[styles.header, { 
+          backgroundColor: theme.bgCard,
+          borderBottomColor: theme.borderColor 
+        }]}>
           <View style={styles.titleContainer}>
-            <Text style={styles.title}>The One Book</Text>
+            <Text style={[styles.title, { color: theme.textPrimary }]}>The One Book</Text>
           </View>
           <View style={styles.controls}>
             <TouchableOpacity
@@ -162,25 +195,35 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
               accessibilityLabel="Open navigation menu"
               accessibilityHint="Opens the book navigation menu"
             >
-              <MaterialIcons name="menu" size={24} color="#FFFFFF" />
+              <MaterialIcons name="menu" size={24} color={theme.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
         
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorTitle}>Error</Text>
-          <Text style={styles.errorText}>{error}</Text>
+        <View style={[styles.errorContainer, { 
+          backgroundColor: theme.bgCard,
+          borderColor: theme.error 
+        }]}>
+          <Text style={[styles.errorTitle, { color: theme.error }]}>Error</Text>
+          <Text style={[styles.errorText, { color: theme.textSecondary }]}>{error}</Text>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
       {/* Header with chapter title and controls */}
-      <View style={styles.header}>
+      <View style={[styles.header, { 
+        backgroundColor: theme.bgCard,
+        borderBottomColor: theme.borderColor 
+      }]}>
         <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={2} ellipsizeMode="tail">
+          <Text 
+            style={[styles.title, { color: theme.textPrimary }]} 
+            numberOfLines={2} 
+            ellipsizeMode="tail"
+          >
             {currentContent.title || chapterTitle}
           </Text>
         </View>
@@ -191,40 +234,43 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
             accessibilityLabel="Open navigation menu"
             accessibilityHint="Opens the book navigation menu"
           >
-            <MaterialIcons name="menu" size={24} color="#FFFFFF" />
+            <MaterialIcons name="menu" size={24} color={theme.textPrimary} />
           </TouchableOpacity>
         </View>
       </View>
       
       {/* Text size and audio controls */}
-      <View style={styles.textSizeControls}>
+      <View style={[styles.textSizeControls, { 
+        backgroundColor: theme.bgCard,
+        borderBottomColor: theme.borderColor 
+      }]}>
         <View style={styles.leftControls}>
-          <MaterialIcons name="format-size" size={20} color="#CCCCCC" />
+          <MaterialIcons name="format-size" size={20} color={theme.textSecondary} />
           <TouchableOpacity
             style={styles.sizeButton}
             onPress={() => setTextSize(Math.max(12, textSize - 2))}
           >
-            <MaterialIcons name="remove" size={20} color="#CCCCCC" />
+            <MaterialIcons name="remove" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.sizeButton}
             onPress={() => setTextSize(Math.min(24, textSize + 2))}
           >
-            <MaterialIcons name="add" size={20} color="#CCCCCC" />
+            <MaterialIcons name="add" size={20} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
         
         {/* Audio player - only shown when audio is available */}
         {currentContent.audioUrl && (
           <View style={styles.audioContainer}>
-            <AudioPlayer audioUrl={currentContent.audioUrl} />
+            <MemoizedAudioPlayer audioUrl={currentContent.audioUrl} />
           </View>
         )}
       </View>
       
       {/* Content */}
-      <ScrollView style={styles.contentScroll}>
-        <View style={styles.contentContainer}>
+      <ScrollView style={[styles.contentScroll, { backgroundColor: theme.bgPrimary }]}>
+        <View style={[styles.contentContainer, { backgroundColor: theme.bgPrimary }]}>
           <CustomHtmlRenderer
             html={currentContent.content}
             textSize={textSize}
@@ -234,7 +280,7 @@ export const BookContentScreen: React.FC<BookContentScreenProps> = ({ openDrawer
           {/* Source Link - only shown when sourceUrl is available */}
           {currentContent.sourceUrl && (
             <Text 
-              style={styles.sourceLink}
+              style={[styles.sourceLink, { color: theme.accent }]}
               onPress={() => Linking.openURL(currentContent.sourceUrl)}
             >
               Read this Teaching on newmessage.org
@@ -288,10 +334,12 @@ const styles = StyleSheet.create({
   leftControls: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 0.3, // Reduced from 40% to 30% of the space
   },
   audioContainer: {
     marginLeft: 'auto',
-    paddingRight: 16, // Add more right-side padding
+    paddingRight: 8,
+    flex: 0.7, // Increased from 60% to 70% of the space for the audio player
   },
   sizeButton: {
     padding: 8,

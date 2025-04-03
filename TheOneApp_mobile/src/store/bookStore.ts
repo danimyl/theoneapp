@@ -29,11 +29,6 @@ interface BookState {
   // Search query for chapter filtering
   searchQuery: string;
   
-  // Audio playback state
-  isAudioPlaying: boolean;
-  isAudioLoading: boolean;
-  audioProgress: number;
-  
   // Actions
   setSelectedVolume: (volumeId: string) => void;
   setSelectedBook: (bookId: string) => void;
@@ -47,12 +42,6 @@ interface BookState {
   setTextSize: (size: number) => void;
   resetError: () => void;
   setSearchQuery: (query: string) => void;
-  
-  // Audio control actions
-  setIsAudioPlaying: (isPlaying: boolean) => void;
-  setIsAudioLoading: (isLoading: boolean) => void;
-  setAudioProgress: (progress: number) => void;
-  resetAudioState: () => void;
 }
 
 const useBookStore = create<BookState>()(
@@ -68,11 +57,6 @@ const useBookStore = create<BookState>()(
       error: null,
       textSize: 16, // Default text size in pixels
       searchQuery: '', // Initial empty search query
-      
-      // Audio state
-      isAudioPlaying: false,
-      isAudioLoading: false,
-      audioProgress: 0,
       
       // Actions
       setSelectedVolume: (volumeId) => 
@@ -103,13 +87,7 @@ const useBookStore = create<BookState>()(
         set({ isBookDrawerOpen: false }),
       
       setCurrentContent: (content) => 
-        set({ 
-          currentContent: content,
-          // Reset audio state when content changes
-          isAudioPlaying: false,
-          isAudioLoading: false,
-          audioProgress: 0
-        }),
+        set({ currentContent: content }),
       
       setIsLoading: (isLoading) => 
         set({ isLoading }),
@@ -125,23 +103,6 @@ const useBookStore = create<BookState>()(
       
       setSearchQuery: (query) =>
         set({ searchQuery: query }),
-        
-      // Audio control actions
-      setIsAudioPlaying: (isPlaying) => 
-        set({ isAudioPlaying: isPlaying }),
-        
-      setIsAudioLoading: (isLoading) => 
-        set({ isAudioLoading: isLoading }),
-        
-      setAudioProgress: (progress) => 
-        set({ audioProgress: progress }),
-        
-      resetAudioState: () => 
-        set({ 
-          isAudioPlaying: false, 
-          isAudioLoading: false, 
-          audioProgress: 0 
-        }),
     }),
     {
       name: 'book-storage',

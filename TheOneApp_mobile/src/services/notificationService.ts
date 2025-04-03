@@ -139,7 +139,7 @@ const notificationService = {
         lightColor: '#1DB954',
         enableLights: false,
         enableVibrate: false,
-        showBadge: false,
+        showBadge: false
       });
 
       // Create a persistent notification for the foreground service
@@ -151,6 +151,7 @@ const notificationService = {
           android: {
             channelId: 'foreground-service',
             priority: 'low',
+            icon: 'notification-icon', // Use our monochrome notification icon
           },
         }),
       } as any);
@@ -270,6 +271,7 @@ const notificationService = {
               android: {
                 sound: playSound ? 'bell.mp3' : undefined,
                 channelId: 'default',
+                icon: 'notification-icon',
               },
             }),
           });
@@ -284,6 +286,7 @@ const notificationService = {
                 android: {
                   sound: playSound ? 'bell.mp3' : undefined,
                   channelId: 'default',
+                  icon: 'notification-icon',
                 },
               }),
             });
@@ -337,6 +340,7 @@ const notificationService = {
             android: {
               sound: playSound ? 'bell.mp3' : undefined,
               channelId: 'default',
+              icon: 'notification-icon',
             },
           }),
         },
@@ -395,6 +399,7 @@ const notificationService = {
               channelId: 'hourly-reminders',
               priority: 'max',
               alarmClock: true,
+              icon: 'notification-icon',
             },
           }),
         },
@@ -755,14 +760,17 @@ const notificationService = {
           }
         } as any);
       } else {
-        // For iOS, use a silent notification with sound
+        // For iOS, use a critical notification with custom sound
         await Notifications.presentNotificationAsync({
           content: {
             title: '', // Empty title for silent notification
             body: '',  // Empty body for silent notification
-            sound: true, // Use default sound on iOS
+            sound: 'bell.mp3', // Use our custom sound
             badge: null, // No badge number
             ios: {
+              sound: 'bell.mp3',
+              critical: true, // Allows sound to play in silent mode
+              interruptionLevel: 'timeSensitive', // Breaks through Focus modes
               _displayInForeground: false // Hide visual notification
             }
           }
@@ -813,6 +821,7 @@ const notificationService = {
               priority: 'max',
               alarmClock: true,
               sound: 'bell.mp3',
+              icon: 'notification-icon',
             },
           }),
         },
@@ -834,6 +843,7 @@ const notificationService = {
             android: {
               channelId: 'default',
               sound: 'bell.mp3',
+              icon: 'notification-icon',
             },
           }),
         },

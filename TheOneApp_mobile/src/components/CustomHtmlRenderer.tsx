@@ -7,6 +7,7 @@
  */
 
 import React, { useMemo } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { Text, View, TouchableOpacity, Linking, StyleSheet } from 'react-native';
 
 interface CustomHtmlRendererProps {
@@ -20,6 +21,8 @@ export const CustomHtmlRenderer: React.FC<CustomHtmlRendererProps> = ({
   textSize,
   onLinkPress 
 }) => {
+  const { theme, isDark } = useTheme();
+
   // Parse HTML and convert to React Native components
   const renderedContent = useMemo(() => {
     if (!html) return null;
@@ -30,8 +33,11 @@ export const CustomHtmlRenderer: React.FC<CustomHtmlRendererProps> = ({
       .replace(/[ \t]+/g, ' ')      // Normalize horizontal whitespace only, preserve newlines
       .trim();
     
-    // Split content into paragraphs
-    const paragraphs = cleanHtml.split('\n\n');
+    // Split content into paragraphs - preserve HTML structure
+    const paragraphs = cleanHtml
+      .split(/<\/p>\s*<p[^>]*>|<\/p>|<p[^>]*>|\n\n+/g)
+      .map(p => p.trim())
+      .filter(p => p.length > 0);
     
     return paragraphs.map((paragraph, index) => {
       // Skip empty paragraphs
@@ -46,7 +52,7 @@ export const CustomHtmlRenderer: React.FC<CustomHtmlRendererProps> = ({
           .replace(/<\/h[1-4]>/g, '')
           .trim();
         
-        return renderHeading(headingText, headingLevel, textSize, index);
+        return renderHeading(headingText, headingLevel, textSize, index, theme);
       }
       
       // Check if paragraph is a blockquote
@@ -56,7 +62,7 @@ export const CustomHtmlRenderer: React.FC<CustomHtmlRendererProps> = ({
           .replace(/<\/blockquote>/g, '')
           .trim();
         
-        return renderBlockquote(quoteText, textSize, index);
+        return renderBlockquote(quoteText, textSize, index, theme);
       }
       
       // Check if paragraph is a list
@@ -70,13 +76,13 @@ export const CustomHtmlRenderer: React.FC<CustomHtmlRendererProps> = ({
         const items = listContent.split('<li>').filter(item => item.trim());
         const cleanItems = items.map(item => item.replace(/<\/li>/g, '').trim());
         
-        return renderList(cleanItems, isOrdered, textSize, index);
+        return renderList(cleanItems, isOrdered, textSize, index, theme);
       }
       
       // Regular paragraph - check for links and formatting
-      return renderParagraph(paragraph, textSize, index, onLinkPress);
+      return renderParagraph(paragraph, textSize, index, theme, onLinkPress);
     }).filter(Boolean); // Remove null items
-  }, [html, textSize, onLinkPress]);
+  }, [html, textSize, theme, onLinkPress]);
   
   return (
     <View>
@@ -86,7 +92,7 @@ export const CustomHtmlRenderer: React.FC<CustomHtmlRendererProps> = ({
 };
 
 // Helper function to render headings with line breaks
-const renderHeading = (text: string, level: number, baseSize: number, key: number) => {
+const renderHeading = (text: string, level: number, baseSize: number, key: number, theme: any) => {
   const fontSize = baseSize * (2.2 - (level * 0.3)); // h1: 1.9x, h2: 1.6x, h3: 1.3x, h4: 1.0x
   
   // Split by newlines and preserve them for rendering
@@ -98,7 +104,7 @@ const renderHeading = (text: string, level: number, baseSize: number, key: numbe
       style={{
         fontSize,
         fontWeight: 'bold',
-        color: '#FFFFFF',
+        color: theme.textPrimary,
         marginTop: 16,
         marginBottom: 8,
         lineHeight: fontSize * 1.3,
@@ -115,7 +121,7 @@ const renderHeading = (text: string, level: number, baseSize: number, key: numbe
 };
 
 // Helper function to render blockquotes with line breaks
-const renderBlockquote = (text: string, baseSize: number, key: number) => {
+const renderBlockquote = (text: string, baseSize: number, key: number, theme: any) => {
   // Split by newlines and preserve them for rendering
   const lines = text.split('\n');
   
@@ -124,7 +130,7 @@ const renderBlockquote = (text: string, baseSize: number, key: number) => {
       key={`quote-${key}`}
       style={{
         borderLeftWidth: 2,
-        borderLeftColor: '#1DB954',
+        borderLeftColor: theme.buttonAccent,
         paddingLeft: 16,
         marginVertical: 12,
       }}
@@ -132,7 +138,7 @@ const renderBlockquote = (text: string, baseSize: number, key: number) => {
       <Text 
         style={{
           fontSize: baseSize,
-          color: '#FFFFFF',
+          color: theme.textPrimary,
           fontStyle: 'italic',
           lineHeight: baseSize * 1.5,
         }}
@@ -149,7 +155,7 @@ const renderBlockquote = (text: string, baseSize: number, key: number) => {
 };
 
 // Helper function to render lists with line breaks in items
-const renderList = (items: string[], ordered: boolean, baseSize: number, key: number) => {
+const renderList = (items: string[], ordered: boolean, baseSize: number, key: number, theme: any) => {
   return (
     <View key={`list-${key}`} style={{ marginVertical: 12 }}>
       {items.map((item, i) => {
@@ -159,7 +165,13 @@ const renderList = (items: string[], ordered: boolean, baseSize: number, key: nu
         return (
           <View key={`item-${key}-${i}`} style={{ flexDirection: 'row', marginBottom: 8 }}>
             {/* Bullet or number */}
-            <Text style={{ fontSize: baseSize, color: '#FFFFFF', marginRight: 8, width: 16, lineHeight: baseSize * 1.5 }}>
+            <Text style={{ 
+              fontSize: baseSize, 
+              color: theme.textPrimary, 
+              marginRight: 8, 
+              width: 16, 
+              lineHeight: baseSize * 1.5 
+            }}>
               {ordered ? `${i + 1}.` : '•'}
             </Text>
             
@@ -168,7 +180,7 @@ const renderList = (items: string[], ordered: boolean, baseSize: number, key: nu
               style={{
                 flex: 1,
                 fontSize: baseSize,
-                color: '#FFFFFF',
+                color: theme.textPrimary,
                 lineHeight: baseSize * 1.5,
               }}
             >
@@ -187,7 +199,7 @@ const renderList = (items: string[], ordered: boolean, baseSize: number, key: nu
 };
 
 // Helper function to render paragraphs with inline formatting and links
-const renderParagraph = (text: string, baseSize: number, key: number, onLinkPress?: (url: string) => void) => {
+const renderParagraph = (text: string, baseSize: number, key: number, theme: any, onLinkPress?: (url: string) => void) => {
   // Process links
   const processLinks = (content: string) => {
     const linkRegex = /<a\s+href="([^"]+)"[^>]*>(.*?)<\/a>/g;
@@ -236,10 +248,11 @@ const renderParagraph = (text: string, baseSize: number, key: number, onLinkPres
     return content;
   };
   
-  // Clean paragraph text (remove <p> tags)
+  // Clean paragraph text while preserving meaningful line breaks
   const cleanText = text
-    .replace(/<p>/g, '')
-    .replace(/<\/p>/g, '')
+    .replace(/<p[^>]*>/g, '')  // Remove opening <p> tags with any attributes
+    .replace(/<\/p>/g, '\n\n') // Replace closing </p> tags with double newline
+    .replace(/\n{3,}/g, '\n\n')  // Normalize multiple newlines to double
     .trim();
   
   // Process links and formatting
@@ -256,7 +269,7 @@ const renderParagraph = (text: string, baseSize: number, key: number, onLinkPres
         return (
           <Text
             key={`link-line-${lineIndex}`}
-            style={{ color: '#1DB954', textDecorationLine: 'underline' }}
+            style={{ color: theme.buttonAccent, textDecorationLine: 'underline' }}
             onPress={() => {
               if (onLinkPress && url) {
                 onLinkPress(url);
@@ -266,7 +279,7 @@ const renderParagraph = (text: string, baseSize: number, key: number, onLinkPres
             }}
           >
             {line}
-            {lineIndex < lines.length - 1 && '\n'}
+            {lineIndex < lines.length - 1 ? '\n\n' : ''}
           </Text>
         );
       }
@@ -276,7 +289,7 @@ const renderParagraph = (text: string, baseSize: number, key: number, onLinkPres
       return (
         <Text key={`text-line-${lineIndex}`}>
           {formattedText}
-          {lineIndex < lines.length - 1 && '\n'}
+          {lineIndex < lines.length - 1 ? '\n\n' : ''}
         </Text>
       );
     });
@@ -287,40 +300,40 @@ const renderParagraph = (text: string, baseSize: number, key: number, onLinkPres
     const content = parts[0].content;
     
     return (
-      <Text 
-        key={`para-${key}`}
-        style={{
-          fontSize: baseSize,
-          color: '#FFFFFF',
-          lineHeight: baseSize * 1.5,
-          marginBottom: 16,
-        }}
-      >
-        {renderWithLineBreaks(content)}
-      </Text>
+      <View key={`para-${key}`} style={{ marginBottom: 24 }}>
+        <Text 
+          style={{
+            fontSize: baseSize,
+            color: theme.textPrimary,
+            lineHeight: baseSize * 1.6,
+          }}
+        >
+          {renderWithLineBreaks(content)}
+        </Text>
+      </View>
     );
   }
   
   // Render paragraph with links and line breaks
   return (
-    <Text 
-      key={`para-${key}`}
-      style={{
-        fontSize: baseSize,
-        color: '#FFFFFF',
-        lineHeight: baseSize * 1.5,
-        marginBottom: 16,
-      }}
-    >
-      {parts.map((part, i) => {
-        if (part.type === 'text') {
-          return renderWithLineBreaks(part.content);
-        } else if (part.type === 'link') {
-          return renderWithLineBreaks(part.content, true, part.url);
-        }
-        return null;
-      })}
-    </Text>
+    <View key={`para-${key}`} style={{ marginBottom: 24 }}>
+      <Text 
+        style={{
+          fontSize: baseSize,
+          color: theme.textPrimary,
+          lineHeight: baseSize * 1.6,
+        }}
+      >
+        {parts.map((part, i) => {
+          if (part.type === 'text') {
+            return renderWithLineBreaks(part.content);
+          } else if (part.type === 'link') {
+            return renderWithLineBreaks(part.content, true, part.url);
+          }
+          return null;
+        })}
+      </Text>
+    </View>
   );
 };
 

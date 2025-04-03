@@ -1,0 +1,8 @@
+Problem files and general issues to be addressed:
+
+>Formatting issues:
+
+\TheOneApp_mobile\src\data\steps.json - none of the steps seem to have paragraph breaks. painful manual process to fix but probably better than scraping them again from pdf
+
+\TheOneApp_mobile\src\data\book\content\the-will-of-heaven.json - has lost its line breaks
+

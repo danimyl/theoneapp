@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   View, 
   Text, 
@@ -26,6 +27,7 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
   onChapterSelect,
   searchQuery = ''
 }) => {
+  const { theme, isDark } = useTheme();
   const {
     selectedVolumeId,
     selectedBookId,
@@ -262,7 +264,13 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
       
       // Add highlighted match
       parts.push(
-        <Text key={index} style={styles.highlightedText}>
+        <Text key={index} style={[
+          styles.highlightedText,
+          {
+            backgroundColor: `${theme.buttonAccent}4D`, // 30% opacity
+            color: theme.buttonAccent
+          }
+        ]}>
           {cleanedText.substring(index, index + lowerQuery.length)}
         </Text>
       );
@@ -280,8 +288,8 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>The One Book</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
+      <Text style={[styles.title, { color: theme.textPrimary }]}>The One Book</Text>
       
       {filteredNavigation.length > 0 ? (
         filteredNavigation.map(volume => (
@@ -290,15 +298,28 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
             <TouchableOpacity 
               style={[
                 styles.volumeHeader,
-                selectedVolumeId === volume.id && styles.selectedItem
+                { backgroundColor: theme.bgCard },
+                selectedVolumeId === volume.id && {
+                  backgroundColor: theme.buttonAccent,
+                  borderLeftColor: isDark ? '#fff' : '#333333'
+                }
               ]}
               onPress={() => handleVolumeSelect(volume.id)}
             >
-              <Text style={styles.volumeTitle}>{cleanTitle(volume.title)}</Text>
+              <Text style={[
+                styles.volumeTitle, 
+                { color: theme.textPrimary },
+                selectedVolumeId === volume.id && { 
+                  color: isDark ? '#fff' : '#333333',
+                  fontWeight: 'bold'
+                }
+              ]}>
+                {cleanTitle(volume.title)}
+              </Text>
               <MaterialIcons 
                 name={expandedVolumes[volume.id] ? "expand-less" : "expand-more"} 
                 size={24} 
-                color="#999999" 
+                color={selectedVolumeId === volume.id ? (isDark ? '#fff' : '#333333') : theme.textSecondary} 
               />
             </TouchableOpacity>
             
@@ -311,15 +332,28 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
                     <TouchableOpacity 
                       style={[
                         styles.bookHeader,
-                        selectedBookId === book.id && styles.selectedItem
+                        { backgroundColor: theme.bgCard },
+                        selectedBookId === book.id && {
+                          backgroundColor: theme.buttonAccent,
+                          borderLeftColor: isDark ? '#fff' : '#333333'
+                        }
                       ]}
                       onPress={() => handleBookSelect(book.id)}
                     >
-                      <Text style={styles.bookTitle}>{cleanTitle(book.title)}</Text>
+                      <Text style={[
+                        styles.bookTitle,
+                        { color: theme.textPrimary },
+                        selectedBookId === book.id && {
+                          color: isDark ? '#fff' : '#333333',
+                          fontWeight: 'bold'
+                        }
+                      ]}>
+                        {cleanTitle(book.title)}
+                      </Text>
                       <MaterialIcons 
                         name={expandedBooks[book.id] ? "expand-less" : "expand-more"} 
                         size={20} 
-                        color="#999999" 
+                        color={selectedBookId === book.id ? (isDark ? '#fff' : '#333333') : theme.textSecondary} 
                       />
                     </TouchableOpacity>
                     
@@ -331,14 +365,25 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
                             key={chapter.id}
                             style={[
                               styles.chapterItem,
-                              selectedChapterId === chapter.id && styles.selectedChapter
+                              { 
+                                backgroundColor: theme.bgInput,
+                                borderBottomColor: theme.borderColor 
+                              },
+                              selectedChapterId === chapter.id && {
+                                backgroundColor: theme.buttonAccent,
+                                borderLeftColor: isDark ? '#fff' : '#333333'
+                              }
                             ]}
                             onPress={() => handleChapterSelect(volume.id, book.id, chapter.id)}
                           >
                             <Text 
                               style={[
                                 styles.chapterTitle,
-                                selectedChapterId === chapter.id && styles.selectedChapterText
+                                { color: theme.textPrimary },
+                                selectedChapterId === chapter.id && {
+                                  color: isDark ? '#fff' : '#333333',
+                                  fontWeight: 'bold'
+                                }
                               ]}
                               numberOfLines={2}
                               ellipsizeMode="tail"
@@ -359,13 +404,13 @@ export const BookNavigationTree: React.FC<BookNavigationTreeProps> = ({
           </View>
         ))
       ) : (
-        <View style={styles.emptyContainer}>
+        <View style={[styles.emptyContainer, { backgroundColor: theme.bgCard }]}>
           {searchQuery ? (
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
               No chapters found matching "{searchQuery}".
             </Text>
           ) : (
-            <Text style={styles.emptyText}>
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
               No book data available. Please run the sync-book-data.mjs script to populate book content.
             </Text>
           )}
@@ -439,19 +484,15 @@ const styles = StyleSheet.create({
   selectedItem: {
     backgroundColor: '#333333',
     borderLeftWidth: 3,
-    borderLeftColor: '#1DB954',
   },
   selectedChapter: {
     backgroundColor: '#333333',
     borderLeftWidth: 3,
-    borderLeftColor: '#1DB954',
   },
   selectedChapterText: {
-    color: '#1DB954',
+    fontWeight: 'bold',
   },
   highlightedText: {
-    backgroundColor: 'rgba(29, 185, 84, 0.3)', // Spotify green with transparency
-    color: '#1DB954',
     fontWeight: 'bold',
   },
   emptyContainer: {

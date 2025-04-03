@@ -12,8 +12,10 @@ import {
   StyleSheet, 
   SafeAreaView, 
   StatusBar,
-  Platform
+  Platform,
+  useColorScheme
 } from 'react-native';
+import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
@@ -33,7 +35,8 @@ import secrets from './src/data/secrets.json';
 // Create bottom tab navigator
 const Tab = createBottomTabNavigator();
 
-export default function App() {
+function AppContent() {
+  const { theme, isDark } = useTheme();
   // State for the secret modal
   const [isSecretModalVisible, setIsSecretModalVisible] = useState(false);
   const [currentSecret, setCurrentSecret] = useState('');
@@ -51,6 +54,32 @@ export default function App() {
   // Track app opens and show secret on second open of the day
   // Use a ref to ensure we only track app open once per app launch
   const hasTrackedAppOpenRef = useRef(false);
+  
+  // Initialize notification permissions and background tasks
+  useEffect(() => {
+    const setupNotifications = async () => {
+      try {
+        // Request notification permissions
+        const permissionGranted = await notificationService.requestPermissions();
+        
+        if (permissionGranted) {
+          console.log('[NOTIFICATIONS] Permission granted, registering background tasks');
+          // Register background tasks for notifications
+          await notificationService.registerBackgroundTasks();
+          
+          // Schedule notifications
+          await notificationService.scheduleHourlyReminders();
+          await notificationService.schedulePracticeReminder();
+        } else {
+          console.log('[NOTIFICATIONS] Permission denied');
+        }
+      } catch (error) {
+        console.error('[NOTIFICATIONS] Error setting up notifications:', error);
+      }
+    };
+    
+    setupNotifications();
+  }, []);
   
   useEffect(() => {
     // Only track app open once per app launch
@@ -174,29 +203,32 @@ export default function App() {
   };
   
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
+      <StatusBar 
+        barStyle={isDark ? "light-content" : "dark-content"} 
+        backgroundColor={theme.bgPrimary} 
+      />
       
       <NavigationContainer>
         <Tab.Navigator
           screenOptions={{
             tabBarStyle: {
-              backgroundColor: '#1E1E1E',
-              borderTopColor: '#333333',
+              backgroundColor: theme.bgSecondary,
+              borderTopColor: theme.borderColor,
               height: 60,
               paddingBottom: 8,
               paddingTop: 8,
             },
-            tabBarActiveTintColor: '#1DB954', // Spotify green
-            tabBarInactiveTintColor: '#CCCCCC',
+            tabBarActiveTintColor: theme.accent,
+            tabBarInactiveTintColor: theme.textSecondary,
             headerStyle: {
-              backgroundColor: '#1E1E1E',
-              borderBottomColor: '#333333',
+              backgroundColor: theme.bgSecondary,
+              borderBottomColor: theme.borderColor,
               borderBottomWidth: 1,
               elevation: 0, // Remove shadow on Android
               shadowOpacity: 0, // Remove shadow on iOS
             },
-            headerTintColor: '#FFFFFF',
+            headerTintColor: theme.textPrimary,
             headerTitleStyle: {
               fontWeight: 'bold',
             },
@@ -247,6 +279,14 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
   },
 });
+
+// Wrap the app with ThemeProvider
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+}

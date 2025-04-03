@@ -1,6 +1,4 @@
-[p
-  |
-  /**
+/**
  * Step Selector Component
  * 
  * A component for selecting and navigating between steps.
@@ -29,6 +27,7 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import stepService, { Step, StepTitle } from '../services/stepService';
 import { useSettingsStore } from '../store/settingsStore';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface StepSelectorProps {
   currentStepId: number;
@@ -39,6 +38,7 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
   currentStepId, 
   onStepChange 
 }) => {
+  const { theme, isDark } = useTheme();
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const [stepNumberInput, setStepNumberInput] = useState('');
   
@@ -138,43 +138,76 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
   }, [stepNumberInput, steps.length, handleSelectStep]);
   
   // Render a step item in the dropdown
-  const renderStepItem = useCallback(({ item }: { item: StepTitle }) => (
-    <Pressable
-      style={[
-        styles.dropdownItem,
-        item.id === currentStepId && styles.dropdownItemSelected
-      ]}
-      onPress={() => handleSelectStep(item.id)}
-    >
-      <Text 
+  const renderStepItem = useCallback(({ item }: { item: StepTitle }) => {
+    const isTodayStep = item.id === todayStepId;
+    const isCurrentStep = item.id === currentStepId;
+
+    return (
+      <Pressable
         style={[
-          styles.dropdownItemText,
-          item.id === currentStepId && styles.dropdownItemTextSelected
+          styles.dropdownItem,
+          { 
+            backgroundColor: theme.bgInput,
+            borderBottomColor: theme.borderColor 
+          },
+          isCurrentStep && { backgroundColor: theme.buttonAccent }
         ]}
-        numberOfLines={1}
+        onPress={() => handleSelectStep(item.id)}
       >
-        {item.id}. {item.title}
-      </Text>
-    </Pressable>
-  ), [currentStepId, handleSelectStep]);
+        <View style={styles.dropdownItemContent}>
+          {isTodayStep && (
+            <View 
+              style={[
+                styles.todayDot,
+                { 
+                  backgroundColor: theme.buttonAccent,
+                  borderColor: theme.borderColor 
+                },
+                isCurrentStep && {
+                  backgroundColor: isDark ? '#fff' : '#333333',
+              borderColor: theme.buttonAccent
+                }
+              ]} 
+            />
+          )}
+          
+          <Text 
+            style={[
+              styles.dropdownItemText,
+              { color: theme.textPrimary },
+              isCurrentStep && { 
+                color: isDark ? '#fff' : '#333333',
+                fontWeight: 'bold'
+              }
+            ]}
+            numberOfLines={1}
+          >
+            {item.id}. {item.title}
+          </Text>
+        </View>
+      </Pressable>
+    );
+  }, [currentStepId, handleSelectStep, todayStepId, theme, isDark]);
   
   // Optimize list rendering with a key extractor
   const keyExtractor = useCallback((item: StepTitle) => `step-${item.id}`, []);
   
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { 
+      backgroundColor: theme.bgCard,
+    }]}>
       {/* Step Selector Dropdown */}
       <TouchableOpacity 
-        style={styles.dropdownButton}
+        style={[styles.dropdownButton, { backgroundColor: theme.bgInput }]}
         onPress={toggleDropdown}
       >
-        <Text style={styles.dropdownButtonText} numberOfLines={1}>
+        <Text style={[styles.dropdownButtonText, { color: theme.textPrimary }]} numberOfLines={1}>
           {currentStep.id}. {currentStep.title}
         </Text>
         <MaterialIcons 
           name={dropdownVisible ? "arrow-drop-up" : "arrow-drop-down"} 
           size={24} 
-          color="#ffffff" 
+          color={theme.textPrimary}
         />
       </TouchableOpacity>
       
@@ -183,20 +216,29 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
         <TouchableOpacity 
           style={[
             styles.navButton,
-            currentStepId <= 1 && styles.navButtonDisabled
+            { backgroundColor: theme.buttonSecondary },
+            currentStepId <= 1 && { 
+              backgroundColor: theme.bgInput,
+              opacity: 0.5 
+            }
           ]}
           onPress={goToPreviousStep}
           disabled={currentStepId <= 1}
         >
-          <MaterialIcons name="chevron-left" size={20} color="#ffffff" />
-          <Text style={styles.navButtonText}>Previous</Text>
+          <MaterialIcons name="chevron-left" size={20} color={theme.textPrimary} />
+          <Text style={[styles.navButtonText, { color: theme.textPrimary }]}>Previous</Text>
         </TouchableOpacity>
         
         {/* Set As Today Button */}
         <TouchableOpacity 
           style={[
             styles.todayButton,
-            currentStepId === todayStepId && styles.todayButtonActive
+            { backgroundColor: theme.buttonSecondary },
+            currentStepId === todayStepId && {
+              backgroundColor: theme.bgInput,
+              borderWidth: 1,
+              borderColor: theme.buttonAccent
+            }
           ]}
           onPress={setAsToday}
           disabled={currentStepId === todayStepId}
@@ -204,11 +246,12 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
           <MaterialIcons 
             name="today" 
             size={18} 
-            color={currentStepId === todayStepId ? "#1DB954" : "#ffffff"} 
+            color={currentStepId === todayStepId ? theme.accent : theme.textPrimary} 
           />
           <Text style={[
             styles.todayButtonText,
-            currentStepId === todayStepId && styles.todayButtonTextActive
+            { color: theme.textPrimary },
+            currentStepId === todayStepId && { color: theme.accent }
           ]}>
             {currentStepId === todayStepId ? "Today's Step" : "Set As Today"}
           </Text>
@@ -217,13 +260,17 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
         <TouchableOpacity 
           style={[
             styles.navButton,
-            currentStepId >= steps.length && styles.navButtonDisabled
+            { backgroundColor: theme.buttonSecondary },
+            currentStepId >= steps.length && { 
+              backgroundColor: theme.bgInput,
+              opacity: 0.5 
+            }
           ]}
           onPress={goToNextStep}
           disabled={currentStepId >= steps.length}
         >
-          <Text style={styles.navButtonText}>Next</Text>
-          <MaterialIcons name="chevron-right" size={20} color="#ffffff" />
+          <Text style={[styles.navButtonText, { color: theme.textPrimary }]}>Next</Text>
+          <MaterialIcons name="chevron-right" size={20} color={theme.textPrimary} />
         </TouchableOpacity>
       </View>
       
@@ -244,30 +291,38 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingContainer}
           >
-            <View style={styles.dropdownContainer}>
-              <View style={styles.dropdownHeader}>
-                <Text style={styles.dropdownHeaderText}>Select Step</Text>
+            <View style={[styles.dropdownContainer, { backgroundColor: theme.bgCard }]}>
+              <View style={[styles.dropdownHeader, { borderBottomColor: theme.borderColor }]}>
+                <Text style={[styles.dropdownHeaderText, { color: theme.textPrimary }]}>Select Step</Text>
                 <TouchableOpacity onPress={() => setDropdownVisible(false)}>
-                  <MaterialIcons name="close" size={24} color="#ffffff" />
+                  <MaterialIcons name="close" size={24} color={theme.textPrimary} />
                 </TouchableOpacity>
               </View>
               
               {/* Step Number Input */}
-              <View style={styles.stepNumberInputContainer}>
+              <View style={[styles.stepNumberInputContainer, { 
+                backgroundColor: theme.bgInput,
+                borderBottomColor: theme.borderColor 
+              }]}>
                 <TextInput
-                  style={styles.stepNumberInput}
+                  style={[styles.stepNumberInput, {
+                    backgroundColor: theme.bgCardHover,
+                    color: theme.textPrimary,
+                    borderColor: theme.borderColor,
+                    borderWidth: 1
+                  }]}
                   placeholder="Enter step #"
-                  placeholderTextColor="#999999"
+                  placeholderTextColor={theme.textDisabled}
                   keyboardType="number-pad"
                   value={stepNumberInput}
                   onChangeText={setStepNumberInput}
                   maxLength={3}
                 />
                 <TouchableOpacity 
-                  style={styles.goButton}
+                  style={[styles.goButton, { backgroundColor: theme.buttonAccent }]}
                   onPress={handleGoToStep}
                 >
-                  <Text style={styles.goButtonText}>Go</Text>
+                  <Text style={[styles.goButtonText, { color: isDark ? '#fff' : '#333333' }]}>Go</Text>
                 </TouchableOpacity>
               </View>
               
@@ -276,7 +331,7 @@ export const StepSelector: React.FC<StepSelectorProps> = ({
                 data={steps}
                 renderItem={renderStepItem}
                 keyExtractor={keyExtractor}
-                style={styles.dropdownList}
+                style={[styles.dropdownList, { backgroundColor: theme.bgInput }]}
                 contentContainerStyle={styles.dropdownListContent}
                 initialNumToRender={10}
                 maxToRenderPerBatch={10}
@@ -451,5 +506,24 @@ const styles = StyleSheet.create({
   },
   dropdownItemTextSelected: {
     fontWeight: 'bold',
+  },
+  dropdownItemContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  todayDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#1DB954', // Theme highlight color (Spotify green)
+    marginRight: 12,
+    marginLeft: 4,
+    borderWidth: 1,
+    borderColor: '#333333', // Dark border for contrast on light backgrounds
+  },
+  todayDotSelected: {
+    backgroundColor: '#ffffff', // White dot when step is selected
+    borderColor: '#1DB954', // Green border for contrast on white dot
   },
 });

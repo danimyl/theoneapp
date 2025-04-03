@@ -23,6 +23,7 @@ import {
   Dimensions
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../contexts/ThemeContext';
 import { Audio } from 'expo-av';
 import { useSimpleTimer } from '../hooks/useSimpleTimer';
 import { useSettingsStore } from '../store/settingsStore';
@@ -44,6 +45,7 @@ const PRACTICE_CONTAINER_HEIGHT = (PRACTICE_ITEM_HEIGHT * 3) + PRACTICE_CONTROLS
 
 // Steps screen with practices and sound
 export const StepsScreen = () => {
+  const { theme, isDark } = useTheme();
   // Sound reference
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const soundLoadedRef = useRef(false);
@@ -1072,7 +1074,7 @@ export const StepsScreen = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
       {/* Step Selector */}
       <StepSelector 
         currentStepId={stepId}
@@ -1088,31 +1090,34 @@ export const StepsScreen = () => {
       {/* Main content area with flex layout */}
       <View style={styles.contentContainer}>
         {/* Step Instructions - Expandable scrollable section */}
-        <View style={styles.instructionsContainer}>
+        <View style={[styles.instructionsContainer, { 
+          borderColor: theme.borderColor,
+          backgroundColor: theme.bgCard
+        }]}>
           <ScrollView 
             style={styles.instructionsScroll}
             contentContainerStyle={styles.instructionsScrollContent}
             showsVerticalScrollIndicator={true}
           >
             {/* Add heading with step ID and title */}
-            <Text style={styles.instructionsHeading}>
+            <Text style={[styles.instructionsHeading, { color: theme.textPrimary }]}>
               STEP {step.id}: {step.title}
             </Text>
             
-            <Text style={styles.instructionsText}>
+            <Text style={[styles.instructionsText, { color: theme.textSecondary }]}>
               {step.instructions || 'No instructions available for this step.'}
             </Text>
             
             {/* Hourly indicator */}
-            <View style={styles.hourlyIndicatorContainer}>
+            <View style={[styles.hourlyIndicatorContainer, { borderTopColor: theme.borderColor }]}>
               <MaterialIcons 
                 name={step.hourly ? "notifications-active" : "notifications-off"} 
                 size={18} 
-                color={step.hourly ? "#1DB954" : "#888888"} 
+                color={step.hourly ? theme.accent : theme.textDisabled} 
               />
               <Text style={[
                 styles.hourlyIndicatorText,
-                step.hourly ? styles.hourlyIndicatorActive : styles.hourlyIndicatorInactive
+                { color: step.hourly ? theme.accent : theme.textDisabled }
               ]}>
                 Hourly Reminders: {step.hourly ? "ON" : "OFF"}
               </Text>
@@ -1121,13 +1126,16 @@ export const StepsScreen = () => {
         </View>
         
         {/* Timer Section - Fixed height for practices */}
-        <View style={styles.timerSection}>
+        <View style={[styles.timerSection, {
+          borderColor: theme.borderColor,
+          backgroundColor: theme.bgCard
+        }]}>
           {/* Progress Bar - Thinner */}
-          <View style={styles.progressContainer}>
+          <View style={[styles.progressContainer, { backgroundColor: theme.borderColor }]}>
             <View 
               style={[
                 styles.progressBar, 
-                { width: `${progress * 100}%` }
+                { width: `${progress * 100}%`, backgroundColor: theme.buttonAccent }
               ]} 
             />
           </View>
@@ -1137,7 +1145,7 @@ export const StepsScreen = () => {
             <View style={styles.controlsContainer}>
               {isRunning ? (
                 <TouchableOpacity
-                  style={[styles.button, styles.pauseButton]}
+                  style={[styles.button, { backgroundColor: theme.warning }]}
                   onPress={() => {
                     // Save the current timeLeft value before pausing
                     setPausedTimeLeft(timeLeft);
@@ -1148,22 +1156,25 @@ export const StepsScreen = () => {
                     setActiveTimerPaused(true);
                   }}
                 >
-                  <MaterialIcons name="pause" size={18} color="#fff" />
-                  <Text style={styles.buttonText}>Pause</Text>
+                  <MaterialIcons name="pause" size={18} color={isDark ? '#fff' : '#333333'} />
+                  <Text style={[styles.buttonText, { color: isDark ? '#fff' : '#333333' }]}>Pause</Text>
                 </TouchableOpacity>
               ) : (
                 <>
                   <TouchableOpacity
                     style={[
-                      styles.button, 
-                      styles.startButton,
-                      disableStartButton && styles.disabledButton
+                      styles.button,
+                      { backgroundColor: theme.buttonAccent },
+                      disableStartButton && { 
+                        backgroundColor: theme.buttonSecondary,
+                        opacity: 0.5 
+                      }
                     ]}
                     onPress={handleStartPractices}
                     disabled={disableStartButton}
                   >
-                    <MaterialIcons name="play-arrow" size={18} color="#fff" />
-                    <Text style={styles.buttonText}>
+                    <MaterialIcons name="play-arrow" size={18} color={isDark ? '#fff' : '#333333'} />
+                    <Text style={[styles.buttonText, { color: isDark ? '#fff' : '#333333' }]}>
                       Start Practices
                     </Text>
                   </TouchableOpacity>
@@ -1179,7 +1190,7 @@ export const StepsScreen = () => {
               
               {isRunning && (
                 <TouchableOpacity
-                  style={[styles.button, styles.resetButton]}
+                  style={[styles.button, { backgroundColor: theme.buttonSecondary }]}
                   onPress={() => {
                     // Custom handler for stop to ensure proper state reset
                     stop();
@@ -1191,8 +1202,8 @@ export const StepsScreen = () => {
                     clearActiveTimer();
                   }}
                 >
-                  <MaterialIcons name="stop" size={18} color="#fff" />
-                  <Text style={styles.buttonText}>Stop</Text>
+                  <MaterialIcons name="stop" size={18} color={theme.textPrimary} />
+                  <Text style={[styles.buttonText, { color: theme.textPrimary }]}>Stop</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -1206,52 +1217,68 @@ export const StepsScreen = () => {
           </View>
           
           {/* Practices List - More compact */}
-          <View style={styles.practicesContainer}>
+          <View style={[styles.practicesContainer, { backgroundColor: theme.bgCard }]}>
             <View style={styles.practicesList}>
               {step.practices.map((practice, index) => (
                 <View 
                   key={index} 
                   style={[
                     styles.practiceItem,
-                    currentIndex === index && isRunning && styles.activePracticeItem
+                    { backgroundColor: theme.bgInput },
+                    currentIndex === index && isRunning && {
+                      backgroundColor: theme.bgCardHover,
+                      borderLeftWidth: 3,
+                      borderLeftColor: theme.accent
+                    }
                   ]}
                 >
                   <View style={styles.practiceRow}>
                     <TouchableOpacity
                       style={[
                         styles.checkbox,
-                        completed[index] && styles.checkboxChecked
+                        { borderColor: theme.borderColor },
+                        completed[index] && {
+                          backgroundColor: theme.buttonAccent,
+                          borderColor: theme.buttonAccent
+                        }
                       ]}
                       onPress={() => handleToggleComplete(index)}
                     >
                       {completed[index] && (
-                        <MaterialIcons name="check" size={15} color="#fff" />
+                        <MaterialIcons name="check" size={15} color={isDark ? '#fff' : '#333333'} />
                       )}
                     </TouchableOpacity>
                     
                     <View style={styles.practiceContent}>
                       <Text style={[
                         styles.practiceText,
-                        completed[index] && styles.practiceTextCompleted
+                        { color: theme.textPrimary },
+                        completed[index] && { 
+                          color: theme.textDisabled,
+                          textDecorationLine: 'line-through'
+                        }
                       ]} numberOfLines={1} ellipsizeMode="tail">
                         {practice}
                       </Text>
                     </View>
                     
                     <View style={styles.durationContainer}>
-                      <MaterialIcons name="access-time" size={15} color="#888888" />
-                      <Text style={styles.durationText}>
+                      <MaterialIcons name="access-time" size={15} color={theme.textDisabled} />
+                      <Text style={[styles.durationText, { color: theme.textDisabled }]}>
                         {formatTime(step.durations[index] || 0)}
                       </Text>
                     </View>
                   </View>
                   
                   {currentIndex === index && isRunning && (
-                    <View style={styles.progressBarContainer}>
+                    <View style={[styles.progressBarContainer, { backgroundColor: theme.borderColor }]}>
                       <View 
                         style={[
                           styles.progressBar,
-                          { width: `${progress * 100}%` }
+                          { 
+                            width: `${progress * 100}%`,
+                            backgroundColor: theme.buttonAccent
+                          }
                         ]} 
                       />
                     </View>

@@ -43,6 +43,9 @@ interface PracticeChecks {
 }
 
 interface SettingsState {
+  // Theme setting
+  isDarkMode: boolean;
+
   // Timer-related settings
   practiceChecks: PracticeChecks;
   lastPracticeStartDate: string | null;
@@ -73,6 +76,9 @@ interface SettingsState {
   lastAppOpenDate: string | null; // Format: "YYYY-MM-DD"
   lastSecretShownDate: string | null; // Format: "YYYY-MM-DD"
   
+  // Theme actions
+  setIsDarkMode: (isDark: boolean) => void;
+
   // Actions
   setPracticeChecks: (stepId: number, checks: boolean[]) => void;
   setLastPracticeStartDate: (date: string | null) => void;
@@ -103,6 +109,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set, get) => ({
       // Initial state
+      isDarkMode: true, // Default to dark mode
       practiceChecks: {},
       lastPracticeStartDate: null,
       
@@ -131,6 +138,10 @@ export const useSettingsStore = create<SettingsState>()(
       lastAppOpenDate: null,
       lastSecretShownDate: null,
       
+      // Theme actions
+      setIsDarkMode: (isDark) =>
+        set({ isDarkMode: isDark }),
+
       // Actions
       setPracticeChecks: (stepId, checks) => 
         set((state) => ({

@@ -2,6 +2,27 @@
 
 This document tracks significant changes and updates to the mobile app.
 
+## Version 1.1.5 (2025-04-03)
+
+### UI Improvements
+- Improved theming consistency across the app
+- Updated interactive elements to use buttonAccent color
+- Fixed "Today's Step" text visibility with proper accent color
+- Enhanced visual hierarchy in navigation and controls
+
+## Version 1.1.4 (2025-04-03)
+
+### Timer Improvements
+- Fixed timer completion sound not playing when device is locked
+- Added high-priority notification channel for timer sounds
+- Implemented dual sound playback strategy for reliable audio feedback
+
+## Version 1.1.3 (2025-04-02)
+
+### UI Cleanup
+- Removed notification tester from settings screen
+- Cleaned up settings screen imports and dependencies
+
 ## Version 1.1.2 (2025-04-02)
 
 ### Notification System Improvements
