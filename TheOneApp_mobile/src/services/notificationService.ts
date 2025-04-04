@@ -17,6 +17,7 @@ import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
+import notifee from '@notifee/react-native';
 import { useSettingsStore } from '../store/settingsStore';
 import stepService from './stepService';
 
@@ -740,44 +741,77 @@ const notificationService = {
    * Uses high-priority notification channel for exact timing
    * @returns {Promise<void>}
    */
-  async sendTimerCompletionSound(): Promise<void> {
+  /**
+   * Initialize Notifee channels and settings
+   * @returns {Promise<void>}
+   */
+  async initializeNotifee(): Promise<void> {
     try {
-      // For Android, use the high-priority channel with alarm clock priority
+      // Request permissions (required for iOS)
+      await notifee.requestPermission();
+
       if (Platform.OS === 'android') {
-        await Notifications.presentNotificationAsync({
-          content: {
-            title: '', // Empty title for silent notification
-            body: '',  // Empty body for silent notification
-            sound: 'bell.mp3',
-            android: {
-              channelId: 'hourly-reminders', // Use our high-priority channel
-              priority: 'max',
-              alarmClock: true, // Ensures exact timing
-              sound: 'bell.mp3',
-              vibrate: false, // No vibration, just sound
-              showWhen: false, // Don't show timestamp
-            }
-          }
-        } as any);
-      } else {
-        // For iOS, use a critical notification with custom sound
-        await Notifications.presentNotificationAsync({
-          content: {
-            title: '', // Empty title for silent notification
-            body: '',  // Empty body for silent notification
-            sound: 'bell.mp3', // Use our custom sound
-            badge: null, // No badge number
-            ios: {
-              sound: 'bell.mp3',
-              critical: true, // Allows sound to play in silent mode
-              interruptionLevel: 'timeSensitive', // Breaks through Focus modes
-              _displayInForeground: false // Hide visual notification
-            }
-          }
-        } as any);
+        // Create a high-priority channel for timer completion
+        await notifee.createChannel({
+          id: 'timer-completion',
+          name: 'Timer Completion',
+          sound: 'bell',  // References bell.mp3 in android/app/src/main/res/raw/
+          importance: 4, // Android.Importance.HIGH
+          vibration: false, // No vibration, just sound
+          // Critical settings for lock screen breakthrough
+          bypassDnd: true, // Bypass Do Not Disturb
+          lights: false,
+        });
       }
     } catch (error) {
+      console.error('[NOTIFICATION] Error initializing Notifee:', error);
+    }
+  },
+
+  async sendTimerCompletionSound(): Promise<void> {
+    try {
+      // Try to play sound directly first
+      await this.playNotificationSound();
+
+      // Then send a notification that will work even when locked
+      await notifee.displayNotification({
+        title: 'Timer Complete',
+        body: 'Your practice timer has finished',
+        android: {
+          channelId: 'timer-completion',
+          sound: 'bell',
+          importance: 4, // Android.Importance.HIGH
+          // Critical flags for lock screen breakthrough
+          fullScreenAction: {
+            id: 'default',
+            launchActivity: 'default',
+          },
+          pressAction: {
+            id: 'default',
+          },
+          // Ensure visibility on lock screen
+          visibility: 1, // PUBLIC
+        },
+        ios: {
+          // iOS-specific settings for critical alerts
+          critical: true,
+          sound: 'bell.mp3',
+          interruptionLevel: 'timeSensitive',
+          // Ensure it shows even when app is in background
+          foregroundPresentationOptions: {
+            sound: true,
+            banner: true,
+          },
+        },
+      });
+    } catch (error) {
       console.error('[NOTIFICATION] Error playing timer completion sound:', error);
+      // Fallback to direct sound playback if notification fails
+      try {
+        await this.playNotificationSound();
+      } catch (err) {
+        console.error('[NOTIFICATION] Fallback sound also failed:', err);
+      }
     }
   },
 

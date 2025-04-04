@@ -2,6 +2,16 @@
 
 This document tracks significant changes and updates to the mobile app.
 
+## Version 1.1.6 (2025-04-04)
+
+### Timer Sound Improvements
+- Implemented Notifee for reliable timer completion sounds
+- Added high-priority notification channel for Android
+- Added critical alert support for iOS
+- Added sound file setup for both platforms
+- Created documentation for iOS sound setup
+- Fixed lock screen sound playback issues
+
 ## Version 1.1.5 (2025-04-03)
 
 ### UI Improvements

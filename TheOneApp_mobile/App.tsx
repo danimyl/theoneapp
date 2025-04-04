@@ -59,6 +59,10 @@ function AppContent() {
   useEffect(() => {
     const setupNotifications = async () => {
       try {
+        // Initialize Notifee first
+        await notificationService.initializeNotifee();
+        console.log('[NOTIFICATIONS] Notifee initialized');
+
         // Request notification permissions
         const permissionGranted = await notificationService.requestPermissions();
         
