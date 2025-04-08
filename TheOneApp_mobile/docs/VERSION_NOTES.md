@@ -2,6 +2,13 @@
 
 This document tracks significant changes and updates to the mobile app.
 
+## Version 1.1.6 (2025-04-09)
+
+### Development Branch Creation
+- Reverted notifee-related changes to create a clean starting point
+- Created new "expo-notifications-only" branch for reimplementation
+- Preserved core functionality while preparing for improved notification system
+
 ## Version 1.1.5 (2025-04-03)
 
 ### UI Improvements
