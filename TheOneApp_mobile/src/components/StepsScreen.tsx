@@ -22,6 +22,13 @@ import {
   Platform,
   Dimensions
 } from 'react-native';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withTiming,
+  runOnJS
+} from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useTheme } from '../contexts/ThemeContext';
 import { Audio } from 'expo-av';
@@ -1078,6 +1085,56 @@ export const StepsScreen = () => {
   const safeProgress = isRunning && currentIndex >= 0 && step?.durations[currentIndex] > 0
     ? isNaN(progress) ? 1 - (timeLeft / step.durations[currentIndex]) : progress
     : 0;
+  
+  // Get all available steps for navigation
+  const allSteps = stepService.getAllStepTitles();
+  const currentStepIndex = allSteps.findIndex(s => s.id === stepId);
+  
+  // Set up swipe gesture handling
+  const translateX = useSharedValue(0);
+  
+  // Function to navigate to previous step
+  const goToPreviousStep = () => {
+    if (currentStepIndex > 0) {
+      handleStepChange(allSteps[currentStepIndex - 1].id);
+    }
+  };
+  
+  // Function to navigate to next step
+  const goToNextStep = () => {
+    if (currentStepIndex < allSteps.length - 1) {
+      handleStepChange(allSteps[currentStepIndex + 1].id);
+    }
+  };
+  
+  // Create swipe gesture handler
+  const swipeGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // Only allow horizontal swiping
+      translateX.value = event.translationX;
+    })
+    .onEnd((event) => {
+      // Determine if swipe was significant enough to trigger navigation
+      const SWIPE_THRESHOLD = 100; // Minimum distance to trigger navigation
+      
+      if (event.translationX > SWIPE_THRESHOLD) {
+        // Swipe right - go to previous step
+        runOnJS(goToPreviousStep)();
+      } else if (event.translationX < -SWIPE_THRESHOLD) {
+        // Swipe left - go to next step
+        runOnJS(goToNextStep)();
+      }
+      
+      // Reset translation with animation
+      translateX.value = withTiming(0, { duration: 300 });
+    });
+  
+  // Create animated style for content container
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
     
   return (
     <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
@@ -1093,213 +1150,215 @@ export const StepsScreen = () => {
         onNavigateToStep={handleStepChange}
       />
       
-      {/* Main content area with flex layout */}
-      <View style={styles.contentContainer}>
-        {/* Step Instructions - Expandable scrollable section */}
-        <View style={[styles.instructionsContainer, { 
-          borderColor: theme.borderColor,
-          backgroundColor: theme.bgCard
-        }]}>
-          <ScrollView 
-            style={styles.instructionsScroll}
-            contentContainerStyle={styles.instructionsScrollContent}
-            showsVerticalScrollIndicator={true}
-          >
-            {/* Add heading with step ID and title */}
-            <Text style={[styles.instructionsHeading, { color: theme.textPrimary }]}>
-              STEP {step.id}: {step.title}
-            </Text>
-            
-            <Text style={[styles.instructionsText, { color: theme.textPrimary }]}>
-              {step.instructions || 'No instructions available for this step.'}
-            </Text>
-            
-            {/* Hourly indicator */}
-            <View style={[styles.hourlyIndicatorContainer, { borderTopColor: theme.borderColor }]}>
-              <MaterialIcons 
-                name={step.hourly ? "notifications-active" : "notifications-off"} 
-                size={18} 
-                color={step.hourly ? theme.accent : theme.textDisabled} 
-              />
-              <Text style={[
-                styles.hourlyIndicatorText,
-                { color: step.hourly ? theme.accent : theme.textDisabled }
-              ]}>
-                Hourly Reminders: {step.hourly ? "ON" : "OFF"}
+      {/* Main content area with flex layout - wrapped with gesture detector */}
+      <GestureDetector gesture={swipeGesture}>
+        <Animated.View style={[styles.contentContainer, animatedStyle]}>
+          {/* Step Instructions - Expandable scrollable section */}
+          <View style={[styles.instructionsContainer, { 
+            borderColor: theme.borderColor,
+            backgroundColor: theme.bgCard
+          }]}>
+            <ScrollView 
+              style={styles.instructionsScroll}
+              contentContainerStyle={styles.instructionsScrollContent}
+              showsVerticalScrollIndicator={true}
+            >
+              {/* Add heading with step ID and title */}
+              <Text style={[styles.instructionsHeading, { color: theme.textPrimary }]}>
+                STEP {step.id}: {step.title}
               </Text>
-            </View>
-          </ScrollView>
-        </View>
-        
-        {/* Timer Section - Fixed height for practices */}
-        <View style={[styles.timerSection, {
-          borderColor: theme.borderColor,
-          backgroundColor: theme.bgCard
-        }]}>
-          {/* Progress Bar - Thinner */}
-          <View style={[styles.progressContainer, { backgroundColor: theme.borderColor }]}>
-            <View 
-              style={[
-                styles.progressBar, 
-                { width: `${safeProgress * 100}%`, backgroundColor: theme.buttonAccent }
-              ]} 
-            />
-          </View>
-          
-          {/* Controls with inline timer */}
-          <View style={styles.controlsRow}>
-            <View style={styles.controlsContainer}>
-              {isRunning ? (
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: theme.warning }]}
-                  onPress={() => {
-                    // Save the current timeLeft value before pausing
-                    setPausedTimeLeft(timeLeft);
-                    pause();
-                    // Set isPaused to true so we know to resume the same practice
-                    setIsPaused(true);
-                    // Also save the paused state to the global store
-                    setActiveTimerPaused(true);
-                  }}
-                >
-                  <MaterialIcons name="pause" size={18} color={isDark ? '#fff' : '#333333'} />
-                  <Text style={[styles.buttonText, { color: isDark ? '#fff' : '#333333' }]}>Pause</Text>
-                </TouchableOpacity>
-              ) : (
-                <>
-                  <TouchableOpacity
-                    style={[
-                      styles.button,
-                      { backgroundColor: theme.buttonAccent },
-                      disableStartButton && { 
-                        backgroundColor: theme.buttonSecondary,
-                        opacity: 0.5 
-                      }
-                    ]}
-                    onPress={handleStartPractices}
-                    disabled={disableStartButton}
-                  >
-                    <MaterialIcons name="play-arrow" size={18} color={isDark ? '#fff' : '#333333'} />
-                    <Text style={[styles.buttonText, { color: isDark ? '#fff' : '#333333' }]}>
-                      Start Practices
-                    </Text>
-                  </TouchableOpacity>
-                  
-                  {/* Show message when button is disabled due to active timer on another step */}
-                  {activeTimerStepId !== null && activeTimerStepId !== stepId && (
-                    <Text style={styles.timerActiveMessage}>
-                      Timer active on Step {activeTimerStepId}
-                    </Text>
-                  )}
-                </>
-              )}
               
-              {isRunning && (
-                <TouchableOpacity
-                  style={[styles.button, { backgroundColor: theme.buttonSecondary }]}
-                  onPress={() => {
-                    // Custom handler for stop to ensure proper state reset
-                    stop();
-                    // Reset the current index to prepare for next start
-                    setCurrentIndex(-1);
-                    // Reset paused state
-                    setIsPaused(false);
-                    // Clear the global timer state
-                    clearActiveTimer();
-                  }}
-                >
-                  <MaterialIcons name="stop" size={18} color={theme.textPrimary} />
-                  <Text style={[styles.buttonText, { color: theme.textPrimary }]}>Stop</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            
-            {/* Only show timer when running */}
-            {isRunning && (
-              <Text style={styles.inlineTimerText}>
-                {formatTime(timeLeft)} remaining
+              <Text style={[styles.instructionsText, { color: theme.textPrimary }]}>
+                {step.instructions || 'No instructions available for this step.'}
               </Text>
-            )}
+              
+              {/* Hourly indicator */}
+              <View style={[styles.hourlyIndicatorContainer, { borderTopColor: theme.borderColor }]}>
+                <MaterialIcons 
+                  name={step.hourly ? "notifications-active" : "notifications-off"} 
+                  size={18} 
+                  color={step.hourly ? theme.accent : theme.textDisabled} 
+                />
+                <Text style={[
+                  styles.hourlyIndicatorText,
+                  { color: step.hourly ? theme.accent : theme.textDisabled }
+                ]}>
+                  Hourly Reminders: {step.hourly ? "ON" : "OFF"}
+                </Text>
+              </View>
+            </ScrollView>
           </View>
           
-          {/* Practices List - More compact */}
-          <View style={[styles.practicesContainer, { backgroundColor: theme.bgCard }]}>
-            <View style={styles.practicesList}>
-              {step.practices.map((practice, index) => (
-                <View 
-                  key={index} 
-                  style={[
-                    styles.practiceItem,
-                    { backgroundColor: theme.bgInput },
-                    currentIndex === index && isRunning && {
-                      backgroundColor: theme.bgCardHover,
-                      borderLeftWidth: 3,
-                      borderLeftColor: theme.accent
-                    }
-                  ]}
-                >
-                  <View style={styles.practiceRow}>
+          {/* Timer Section - Fixed height for practices */}
+          <View style={[styles.timerSection, {
+            borderColor: theme.borderColor,
+            backgroundColor: theme.bgCard
+          }]}>
+            {/* Progress Bar - Thinner */}
+            <View style={[styles.progressContainer, { backgroundColor: theme.borderColor }]}>
+              <View 
+                style={[
+                  styles.progressBar, 
+                  { width: `${safeProgress * 100}%`, backgroundColor: theme.buttonAccent }
+                ]} 
+              />
+            </View>
+            
+            {/* Controls with inline timer */}
+            <View style={styles.controlsRow}>
+              <View style={styles.controlsContainer}>
+                {isRunning ? (
+                  <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.warning }]}
+                    onPress={() => {
+                      // Save the current timeLeft value before pausing
+                      setPausedTimeLeft(timeLeft);
+                      pause();
+                      // Set isPaused to true so we know to resume the same practice
+                      setIsPaused(true);
+                      // Also save the paused state to the global store
+                      setActiveTimerPaused(true);
+                    }}
+                  >
+                    <MaterialIcons name="pause" size={18} color={isDark ? '#fff' : '#333333'} />
+                    <Text style={[styles.buttonText, { color: isDark ? '#fff' : '#333333' }]}>Pause</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <>
                     <TouchableOpacity
                       style={[
-                        styles.checkbox,
-                        { borderColor: theme.borderColor },
-                        // Make unchecked checkbox more visible in dark mode
-                        isDark && !completed[index] && { 
-                          borderColor: '#AAAAAA', // Much brighter border for dark mode
-                          borderWidth: 2 // Slightly thicker border for better visibility
-                        },
-                        completed[index] && {
-                          backgroundColor: theme.buttonAccent,
-                          borderColor: theme.buttonAccent
+                        styles.button,
+                        { backgroundColor: theme.buttonAccent },
+                        disableStartButton && { 
+                          backgroundColor: theme.buttonSecondary,
+                          opacity: 0.5 
                         }
                       ]}
-                      onPress={() => handleToggleComplete(index)}
+                      onPress={handleStartPractices}
+                      disabled={disableStartButton}
                     >
-                      {completed[index] && (
-                        <MaterialIcons name="check" size={15} color={isDark ? '#fff' : '#333333'} />
-                      )}
+                      <MaterialIcons name="play-arrow" size={18} color={isDark ? '#fff' : '#333333'} />
+                      <Text style={[styles.buttonText, { color: isDark ? '#fff' : '#333333' }]}>
+                        Start Practices
+                      </Text>
                     </TouchableOpacity>
                     
-                    <View style={styles.practiceContent}>
-                      <Text style={[
-                        styles.practiceText,
-                        { color: theme.textPrimary },
-                        completed[index] && { 
-                          color: theme.textDisabled,
-                          textDecorationLine: 'line-through'
-                        }
-                      ]} numberOfLines={1} ellipsizeMode="tail">
-                        {practice}
+                    {/* Show message when button is disabled due to active timer on another step */}
+                    {activeTimerStepId !== null && activeTimerStepId !== stepId && (
+                      <Text style={styles.timerActiveMessage}>
+                        Timer active on Step {activeTimerStepId}
                       </Text>
+                    )}
+                  </>
+                )}
+                
+                {isRunning && (
+                  <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.buttonSecondary }]}
+                    onPress={() => {
+                      // Custom handler for stop to ensure proper state reset
+                      stop();
+                      // Reset the current index to prepare for next start
+                      setCurrentIndex(-1);
+                      // Reset paused state
+                      setIsPaused(false);
+                      // Clear the global timer state
+                      clearActiveTimer();
+                    }}
+                  >
+                    <MaterialIcons name="stop" size={18} color={theme.textPrimary} />
+                    <Text style={[styles.buttonText, { color: theme.textPrimary }]}>Stop</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              
+              {/* Only show timer when running */}
+              {isRunning && (
+                <Text style={styles.inlineTimerText}>
+                  {formatTime(timeLeft)} remaining
+                </Text>
+              )}
+            </View>
+            
+            {/* Practices List - More compact */}
+            <View style={[styles.practicesContainer, { backgroundColor: theme.bgCard }]}>
+              <View style={styles.practicesList}>
+                {step.practices.map((practice, index) => (
+                  <View 
+                    key={index} 
+                    style={[
+                      styles.practiceItem,
+                      { backgroundColor: theme.bgInput },
+                      currentIndex === index && isRunning && {
+                        backgroundColor: theme.bgCardHover,
+                        borderLeftWidth: 3,
+                        borderLeftColor: theme.accent
+                      }
+                    ]}
+                  >
+                    <View style={styles.practiceRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.checkbox,
+                          { borderColor: theme.borderColor },
+                          // Make unchecked checkbox more visible in dark mode
+                          isDark && !completed[index] && { 
+                            borderColor: '#AAAAAA', // Much brighter border for dark mode
+                            borderWidth: 2 // Slightly thicker border for better visibility
+                          },
+                          completed[index] && {
+                            backgroundColor: theme.buttonAccent,
+                            borderColor: theme.buttonAccent
+                          }
+                        ]}
+                        onPress={() => handleToggleComplete(index)}
+                      >
+                        {completed[index] && (
+                          <MaterialIcons name="check" size={15} color={isDark ? '#fff' : '#333333'} />
+                        )}
+                      </TouchableOpacity>
+                      
+                      <View style={styles.practiceContent}>
+                        <Text style={[
+                          styles.practiceText,
+                          { color: theme.textPrimary },
+                          completed[index] && { 
+                            color: theme.textDisabled,
+                            textDecorationLine: 'line-through'
+                          }
+                        ]} numberOfLines={1} ellipsizeMode="tail">
+                          {practice}
+                        </Text>
+                      </View>
+                      
+                      <View style={styles.durationContainer}>
+                        <MaterialIcons name="access-time" size={15} color={theme.textDisabled} />
+                        <Text style={[styles.durationText, { color: theme.textDisabled }]}>
+                          {formatTime(step.durations[index] || 0)}
+                        </Text>
+                      </View>
                     </View>
                     
-                    <View style={styles.durationContainer}>
-                      <MaterialIcons name="access-time" size={15} color={theme.textDisabled} />
-                      <Text style={[styles.durationText, { color: theme.textDisabled }]}>
-                        {formatTime(step.durations[index] || 0)}
-                      </Text>
-                    </View>
+                    {currentIndex === index && isRunning && (
+                      <View style={[styles.progressBarContainer, { backgroundColor: theme.borderColor }]}>
+                        <View 
+                          style={[
+                            styles.progressBar,
+                            { 
+                              width: `${safeProgress * 100}%`,
+                              backgroundColor: theme.buttonAccent
+                            }
+                          ]} 
+                        />
+                      </View>
+                    )}
                   </View>
-                  
-                  {currentIndex === index && isRunning && (
-                    <View style={[styles.progressBarContainer, { backgroundColor: theme.borderColor }]}>
-                      <View 
-                        style={[
-                          styles.progressBar,
-                          { 
-                            width: `${safeProgress * 100}%`,
-                            backgroundColor: theme.buttonAccent
-                          }
-                        ]} 
-                      />
-                    </View>
-                  )}
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 };

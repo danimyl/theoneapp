@@ -2,6 +2,8 @@
 
 This document outlines the implementation of background notifications in the mobile app to ensure notifications are delivered even when the app is closed or in the background.
 
+> **IMPORTANT UPDATE (April 2025)**: We have reverted to a strictly managed Expo workflow with prebuild after encountering issues with the Notifee implementation. All background notification functionality is now implemented using Expo's native notification APIs. See [NOTIFICATION_SYSTEM_UPDATE.md](./NOTIFICATION_SYSTEM_UPDATE.md) for details.
+
 ## Problem Statement
 
 The current notification system only works when the app is in the foreground. Hourly notifications and practice reminders are not delivered when the app is in the background or closed, which significantly reduces their effectiveness.

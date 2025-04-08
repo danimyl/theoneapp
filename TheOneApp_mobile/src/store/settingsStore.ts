@@ -76,6 +76,9 @@ interface SettingsState {
   lastAppOpenDate: string | null; // Format: "YYYY-MM-DD"
   lastSecretShownDate: string | null; // Format: "YYYY-MM-DD"
   
+  // Foreground service tracking
+  lastForegroundServiceDate: string | null; // Format: "YYYY-MM-DD"
+  
   // Theme actions
   setIsDarkMode: (isDark: boolean) => void;
 
@@ -100,6 +103,7 @@ interface SettingsState {
   setAppOpenCountToday: (count: number) => void;
   setLastAppOpenDate: (date: string | null) => void;
   setLastSecretShownDate: (date: string | null) => void;
+  setLastForegroundServiceDate: (date: string | null) => void;
   
   // Reset functionality
   resetAllChecks: () => void;
@@ -137,6 +141,9 @@ export const useSettingsStore = create<SettingsState>()(
       appOpenCountToday: 0,
       lastAppOpenDate: null,
       lastSecretShownDate: null,
+      
+      // Foreground service tracking
+      lastForegroundServiceDate: null,
       
       // Theme actions
       setIsDarkMode: (isDark) =>
@@ -189,6 +196,10 @@ export const useSettingsStore = create<SettingsState>()(
       
       setLastSecretShownDate: (date) => 
         set({ lastSecretShownDate: date }),
+      
+      // Foreground service actions
+      setLastForegroundServiceDate: (date) => 
+        set({ lastForegroundServiceDate: date }),
       
       // Timer persistence actions
       setActiveTimer: (stepId, practiceIndex, duration) => {

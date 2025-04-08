@@ -2,6 +2,8 @@
 
 This document outlines the changes made to the practice reminder notification message in TheOneApp mobile application.
 
+> **IMPORTANT UPDATE (April 2025)**: We have reverted to a strictly managed Expo workflow with prebuild after encountering issues with the Notifee implementation. All notification functionality is now implemented using Expo's native notification APIs. See [NOTIFICATION_SYSTEM_UPDATE.md](./NOTIFICATION_SYSTEM_UPDATE.md) for details.
+
 ## Change Summary
 
 The notification message for incomplete practices has been updated to use a more action-oriented format.

@@ -2,6 +2,8 @@
 
 This document explains the hourly notification system implemented in the mobile app. The system provides hourly reminders with bell sounds for the current step.
 
+> **IMPORTANT UPDATE (April 2025)**: We have reverted to a strictly managed Expo workflow with prebuild after encountering issues with the Notifee implementation. All hourly notification functionality is now implemented using Expo's native notification APIs. See [NOTIFICATION_SYSTEM_UPDATE.md](./NOTIFICATION_SYSTEM_UPDATE.md) for details.
+
 ## Overview
 
 The hourly notification system sends a notification with a bell sound at the top of each hour (XX:00) for the current step. This helps users maintain awareness of their practice throughout the day.

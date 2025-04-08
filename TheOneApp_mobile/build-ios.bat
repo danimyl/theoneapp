@@ -59,7 +59,7 @@ echo ===== All checks passed! =====
 echo.
 
 echo Starting EAS build for iOS...
-call npx eas build --platform ios --profile preview --non-interactive --no-wait
+call npx eas build --platform ios --profile preview --non-interactive --no-wait --clear-cache
 if %errorlevel% neq 0 (
     echo ERROR: EAS build command failed with exit code %errorlevel%.
     pause

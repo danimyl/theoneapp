@@ -2,14 +2,6 @@
  * Notification Service
  * 
  * Handles mobile notifications and sounds for the application.
- * Provides functionality for:
- * - Requesting notification permissions
- * - Checking quiet hours settings
- * - Playing notification sounds
- * - Sending notifications with customizable content
- * - Sending hourly reminders for steps
- * - Background notification support
- * - Scheduled notifications
  */
 
 import { Platform } from 'react-native';
@@ -17,15 +9,6 @@ import { Audio } from 'expo-av';
 import * as Notifications from 'expo-notifications';
 import * as TaskManager from 'expo-task-manager';
 import * as BackgroundFetch from 'expo-background-fetch';
-import notifee, { 
-  AndroidImportance, 
-  AndroidVisibility, 
-  AndroidCategory,
-  RepeatFrequency, // Added import
-  TriggerType,     // Added import
-  TimestampTrigger, // Added import
-  Notification     // Added import
-} from '@notifee/react-native';
 import { useSettingsStore } from '../store/settingsStore';
 import stepService from './stepService';
 
@@ -43,7 +26,15 @@ Notifications.setNotificationHandler({
 });
 
 // Define background tasks
-// TaskManager.defineTask(HOURLY_NOTIFICATION_TASK, ...) // REMOVED (Handled by Notifee triggers)
+TaskManager.defineTask(HOURLY_NOTIFICATION_TASK, async () => {
+  try {
+    await notificationService.checkAndSendHourlyNotification();
+    return BackgroundFetch.BackgroundFetchResult.NewData;
+  } catch (error) {
+    console.error('[BACKGROUND] Error in hourly notification task:', error);
+    return BackgroundFetch.BackgroundFetchResult.Failed;
+  }
+});
 
 TaskManager.defineTask(PRACTICE_REMINDER_TASK, async () => {
   try {
@@ -61,9 +52,8 @@ TaskManager.defineTask(PRACTICE_REMINDER_TASK, async () => {
 const notificationService = {
   /**
    * Register background tasks for notifications
-   * @returns {Promise<void>}
    */
-  async registerBackgroundTasks() {
+  async registerBackgroundTasks(): Promise<void> {
     try {
       // Check if we have notification permissions first
       const { status } = await Notifications.getPermissionsAsync();
@@ -72,8 +62,13 @@ const notificationService = {
         return;
       }
 
-      // Register hourly notification task - REMOVED (Handled by Notifee triggers)
-      // await BackgroundFetch.registerTaskAsync(HOURLY_NOTIFICATION_TASK, { ... });
+      // Register hourly notification task
+      await BackgroundFetch.registerTaskAsync(HOURLY_NOTIFICATION_TASK, {
+        minimumInterval: 60 * 60, // 1 hour in seconds
+        stopOnTerminate: false,
+        startOnBoot: true,
+      });
+      console.log('[BACKGROUND] Registered hourly notification task');
       
       // Register practice reminder task
       await BackgroundFetch.registerTaskAsync(PRACTICE_REMINDER_TASK, {
@@ -94,9 +89,8 @@ const notificationService = {
 
   /**
    * Set up Android foreground service for reliable background operation
-   * @returns {Promise<void>}
    */
-  async setupAndroidForegroundService() {
+  async setupAndroidForegroundService(): Promise<void> {
     if (Platform.OS !== 'android') return;
 
     try {
@@ -111,8 +105,17 @@ const notificationService = {
         sound: 'bell.mp3', // Use our custom sound
       });
 
-      // Create high-priority channel for hourly reminders - REMOVED (Handled by Notifee below)
-      // await Notifications.setNotificationChannelAsync('hourly-reminders', { ... });
+      // Create high-priority channel for hourly reminders
+      await Notifications.setNotificationChannelAsync('hourly-reminders', {
+        name: 'Hourly Reminders',
+        importance: Notifications.AndroidImportance.HIGH,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#1DB954',
+        enableLights: true,
+        enableVibrate: true,
+        sound: 'bell.mp3', // Use our custom sound
+        bypassDnd: true, // Bypass Do Not Disturb
+      });
 
       await Notifications.setNotificationChannelAsync('foreground-service', {
         name: 'Background Service',
@@ -127,7 +130,7 @@ const notificationService = {
       // Create a persistent notification for the foreground service
       await Notifications.presentNotificationAsync({
         title: 'Steps to Knowledge',
-        body: 'Running in background to deliver your notifications',
+        body: 'Hourly reminders will play until you clear this notification',
         sound: false,
         ...(Platform.OS === 'android' && {
           android: {
@@ -137,19 +140,31 @@ const notificationService = {
           },
         }),
       } as any);
+      
+      // Store the date when the foreground service was started
+      const today = new Date().toISOString().split('T')[0];
+      useSettingsStore.getState().setLastForegroundServiceDate(today);
 
       console.log('[BACKGROUND] Android notification channels and foreground service set up');
     } catch (error) {
       console.error('[BACKGROUND] Error setting up Android foreground service:', error);
     }
   },
+  
   /**
    * Request notification permissions
-   * @returns {Promise<boolean>} True if permissions granted
    */
-  async requestPermissions() {
+  async requestPermissions(): Promise<boolean> {
     if (Platform.OS === 'android' || Platform.OS === 'ios') {
-      const { status } = await Notifications.requestPermissionsAsync();
+      const { status } = await Notifications.requestPermissionsAsync({
+        ios: {
+          allowAlert: true,
+          allowBadge: true,
+          allowSound: true,
+          allowCriticalAlerts: true,
+          provideAppNotificationSettings: true,
+        },
+      });
       return status === 'granted';
     }
     return false;
@@ -157,9 +172,8 @@ const notificationService = {
   
   /**
    * Check if current time is within sleep hours
-   * @returns {boolean} True if current time is within sleep hours
    */
-  isWithinSleepHours() {
+  isWithinSleepHours(): boolean {
     try {
       const { sleepStart, sleepEnd } = useSettingsStore.getState();
       
@@ -193,9 +207,8 @@ const notificationService = {
   
   /**
    * Play notification sound
-   * @returns {Promise<void>}
    */
-  async playNotificationSound() {
+  async playNotificationSound(): Promise<void> {
     try {
       const { sound } = await Audio.Sound.createAsync(
         require('../../assets/bell.mp3')
@@ -218,11 +231,6 @@ const notificationService = {
   
   /**
    * Send a notification
-   * @param {string} title The notification title
-   * @param {string} body The notification body
-   * @param {boolean} playSound Whether to play a sound with the notification
-   * @param {boolean} immediate Whether to send immediately or schedule
-   * @returns {Promise<boolean>} True if notification was sent
    */
   async sendNotification(
     title: string, 
@@ -288,11 +296,6 @@ const notificationService = {
 
   /**
    * Schedule a notification for a specific time
-   * @param {string} title The notification title
-   * @param {string} body The notification body
-   * @param {Date} date The date and time to send the notification
-   * @param {boolean} playSound Whether to play a sound with the notification
-   * @returns {Promise<string>} The notification identifier
    */
   async scheduleNotification(
     title: string,
@@ -343,12 +346,6 @@ const notificationService = {
 
   /**
    * Schedule a recurring notification
-   * @param {string} title The notification title
-   * @param {string} body The notification body
-   * @param {number} hour The hour to send the notification (0-23)
-   * @param {number} minute The minute to send the notification (0-59)
-   * @param {boolean} playSound Whether to play a sound with the notification
-   * @returns {Promise<string>} The notification identifier
    */
   async scheduleRecurringNotification(
     title: string,
@@ -356,8 +353,7 @@ const notificationService = {
     hour: number,
     minute: number,
     playSound = true,
-    channelId = 'notifee-hourly-reminders', // Default to high-priority channel
-    repeatFrequency: RepeatFrequency = RepeatFrequency.NONE // Default to no repeat - Use imported type
+    channelId = 'hourly-reminders' // Default to high-priority channel
   ): Promise<string> {
     try {
       // Calculate the next occurrence
@@ -370,52 +366,35 @@ const notificationService = {
         nextDate.setDate(nextDate.getDate() + 1);
       }
 
-      // Use Notifee for recurring trigger notifications with enhanced settings
-      const trigger: TimestampTrigger = { // Use imported type
-        type: TriggerType.TIMESTAMP, // Use imported enum
-        timestamp: nextDate.getTime(),
-        repeatFrequency: repeatFrequency,
-        // Use AlarmManager with exact timing for Android
-        ...(Platform.OS === 'android' && {
-          alarmManager: {
-            allowWhileIdle: true, // Work in Doze mode
-          } as any // Type assertion to bypass TypeScript check
-        }),
-      };
-
-      // Define notification details with enhanced settings for lock screen breakthrough
-      const notificationDetails: Notification = { // Use imported type
-        title,
-        body,
-        android: {
-          channelId: channelId, // Use the specified channel ID
-          sound: playSound ? 'bell' : undefined,
-          importance: AndroidImportance.HIGH, // Maximum importance
-          visibility: AndroidVisibility.PUBLIC, // Show on lock screen
-          category: AndroidCategory.ALARM, // Use ALARM category for high priority
-          autoCancel: false, // Keep notification until dismissed
-          pressAction: { id: 'default' },
-          smallIcon: 'notification_icon', // Ensure this matches drawable name
-          showTimestamp: true, // Show when notification was triggered
-          vibrationPattern: [100, 200, 100], // Custom vibration pattern
+      // Schedule using Expo's native scheduling
+      const identifier = await Notifications.scheduleNotificationAsync({
+        content: {
+          title,
+          body,
+          sound: playSound ? (Platform.OS === 'android' ? 'bell.mp3' : true) : undefined,
+          ...(Platform.OS === 'android' && {
+            android: {
+              sound: playSound ? 'bell.mp3' : undefined,
+              channelId: channelId,
+              icon: 'notification-icon',
+              priority: 'max',
+            },
+          }),
+          ...(Platform.OS === 'ios' && {
+            ios: {
+              sound: playSound ? true : undefined,
+            },
+          }),
         },
-        ios: {
-          sound: playSound ? 'bell.mp3' : undefined,
-          critical: true, // Critical alerts break through on iOS
-          interruptionLevel: 'critical', // Highest priority
-          criticalVolume: 1.0, // Full volume
-          foregroundPresentationOptions: {
-            sound: true,
-            banner: true,
-            list: true,
-          },
-        },
-      };
+        trigger: {
+          hour: hour,
+          minute: minute,
+          repeats: true,
+          channelId: Platform.OS === 'android' ? channelId : undefined,
+        } as any, // Type assertion needed due to Expo types not being fully accurate
+      });
 
-      // Create the trigger notification
-      const identifier = await notifee.createTriggerNotification(notificationDetails, trigger);
-
-      console.log(`[NOTIFICATION] Scheduled enhanced Notifee trigger notification ${identifier} for ${nextDate.toLocaleString()} on channel ${channelId} with frequency ${repeatFrequency}`);
+      console.log(`[NOTIFICATION] Scheduled recurring notification ${identifier} for ${hour}:${minute}`);
       return identifier;
     } catch (error) {
       console.error('[NOTIFICATION] Failed to schedule recurring notification:', error);
@@ -425,10 +404,6 @@ const notificationService = {
   
   /**
    * Send a reminder notification for a step
-   * @param {number} stepId Step ID
-   * @param {string} stepTitle Step title
-   * @param {boolean} immediate Whether to send immediately or schedule
-   * @returns {Promise<boolean>} True if notification was sent
    */
   async sendHourlyReminder(
     stepId: number, 
@@ -445,7 +420,6 @@ const notificationService = {
 
   /**
    * Schedule hourly reminders for the current step
-   * @returns {Promise<void>}
    */
   async scheduleHourlyReminders(): Promise<void> {
     try {
@@ -482,23 +456,21 @@ const notificationService = {
       // Cancel any existing hourly reminders
       await this.cancelHourlyReminders();
       
-      // Schedule only the *next* hourly reminder using Notifee's trigger with hourly repeat
-      const nextHour = new Date();
-      nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0); // Top of the next hour
+      // Schedule for the next hour
+      const now = new Date();
+      const currentHour = now.getHours();
+      const nextHour = (currentHour + 1) % 24;
       
-      console.log('[NOTIFICATION] Scheduling next hourly reminder for:', nextHour.toLocaleTimeString());
-
       await this.scheduleRecurringNotification(
         `Hourly Reminder: Step ${currentStepId}`,
         currentStep.title,
-        nextHour.getHours(),
+        nextHour,
         0, // Minute
         true, // Play sound
-        'notifee-hourly-reminders', // Use the dedicated Notifee channel
-        RepeatFrequency.HOURLY // Set repeat frequency - Use imported enum
+        'hourly-reminders' // Use the dedicated channel
       );
       
-      console.log('[NOTIFICATION] Successfully scheduled next hourly reminder using Notifee trigger');
+      console.log('[NOTIFICATION] Successfully scheduled hourly reminder');
     } catch (error) {
       console.error('[NOTIFICATION] Error scheduling hourly reminders:', error);
     }
@@ -506,7 +478,6 @@ const notificationService = {
 
   /**
    * Cancel all scheduled hourly reminders
-   * @returns {Promise<void>}
    */
   async cancelHourlyReminders(): Promise<void> {
     try {
@@ -527,11 +498,6 @@ const notificationService = {
   
   /**
    * Send a practice reminder notification if practices are incomplete
-   * @param {number} stepId Current step ID
-   * @param {string} stepTitle Step title
-   * @param {boolean[]} practiceChecks Array of practice completion states
-   * @param {boolean} immediate Whether to send immediately or schedule
-   * @returns {Promise<boolean>} True if notification was sent
    */
   async sendPracticeReminder(
     stepId: number, 
@@ -567,7 +533,6 @@ const notificationService = {
 
   /**
    * Schedule a practice reminder for a specific time
-   * @returns {Promise<void>}
    */
   async schedulePracticeReminder(): Promise<void> {
     try {
@@ -615,7 +580,6 @@ const notificationService = {
 
   /**
    * Cancel all scheduled practice reminders
-   * @returns {Promise<void>}
    */
   async cancelPracticeReminders(): Promise<void> {
     try {
@@ -636,7 +600,6 @@ const notificationService = {
 
   /**
    * Check and send hourly notification (for background tasks)
-   * @returns {Promise<boolean>} True if notification was sent
    */
   async checkAndSendHourlyNotification(): Promise<boolean> {
     try {
@@ -676,7 +639,6 @@ const notificationService = {
 
   /**
    * Check and send practice reminder (for background tasks)
-   * @returns {Promise<boolean>} True if notification was sent
    */
   async checkAndSendPracticeReminder(): Promise<boolean> {
     try {
@@ -747,143 +709,29 @@ const notificationService = {
   },
 
   /**
-   * Test notification functionality
-   * @returns {Promise<string>} Test status message
+   * Send a timer completion sound
    */
-  /**
-   * Send a timer completion sound that works even when device is locked
-   * Uses high-priority notification channel for exact timing
-   * @returns {Promise<void>}
-   */
-  /**
-   * Initialize Notifee channels and settings
-   * @returns {Promise<void>}
-   */
-  async initializeNotifee(): Promise<void> {
-    try {
-      // Request permissions with critical alert option (especially important for iOS)
-      const permissionSettings = {
-        sound: true,
-        announcement: true,
-        criticalAlert: true, // iOS critical alert permission
-      };
-      
-      // Add Android-specific permissions for Android 12+ (API level 31+)
-      if (Platform.OS === 'android') {
-        // @ts-ignore - TypeScript doesn't recognize the android property
-        permissionSettings.android = {
-          alarm: true, // Request SCHEDULE_EXACT_ALARM permission
-          scheduleExactAlarm: true, // Alternative way to request the permission
-        };
-      }
-      
-      // Request permissions
-      const permissionResult = await notifee.requestPermission(permissionSettings);
-      
-      console.log('[NOTIFICATION] Permission request result:', permissionResult);
-      
-      // Check if we have alarm permission on Android
-      if (Platform.OS === 'android') {
-        try {
-          // Use type assertion since the method might not be in the type definitions
-          const hasAlarmPermission = await (notifee as any).getAlarmPermissionStatus?.();
-          console.log('[NOTIFICATION] Alarm permission status:', hasAlarmPermission);
-          
-          // If permission is denied, log a warning
-          if (hasAlarmPermission === 'denied') {
-            console.warn('[NOTIFICATION] Alarm permission denied. Timer bells may not work properly when device is locked.');
-          }
-        } catch (err) {
-          // The method might not exist in older versions of notifee
-          console.log('[NOTIFICATION] Could not check alarm permission status:', err);
-        }
-      }
-
-      if (Platform.OS === 'android') {
-        // Create a high-priority channel for timer completion with enhanced settings
-        await notifee.createChannel({
-          id: 'timer-completion',
-          name: 'Timer Completion',
-          sound: 'bell',  // References bell.mp3 in android/app/src/main/res/raw/
-          importance: AndroidImportance.HIGH, // Maximum importance
-          vibration: true, 
-          vibrationPattern: [0, 500, 200, 500], // Stronger vibration pattern
-          // Critical settings for lock screen breakthrough
-          bypassDnd: true, // Bypass Do Not Disturb
-          visibility: AndroidVisibility.PUBLIC, // Show on lock screen
-          lights: true, // Use notification lights if available
-          lightColor: '#1DB954', // Match app theme color
-        });
-
-        // Create a high-priority channel for HOURLY reminders using Notifee
-        await notifee.createChannel({
-          id: 'notifee-hourly-reminders',
-          name: 'Hourly Reminders (Notifee)',
-          sound: 'bell',
-          importance: AndroidImportance.HIGH,
-          vibration: true,
-          vibrationPattern: [100, 200, 100],
-          bypassDnd: true,
-          visibility: AndroidVisibility.PUBLIC,
-          lights: true,
-          lightColor: '#1DB954',
-        });
-      }
-      
-      console.log('[NOTIFICATION] Notifee initialized with enhanced permissions and channels');
-    } catch (error) {
-      console.error('[NOTIFICATION] Error initializing Notifee:', error);
-    }
-  },
-
   async sendTimerCompletionSound(): Promise<void> {
     try {
-      console.log('[NOTIFICATION] Sending timer completion sound with enhanced settings');
+      console.log('[NOTIFICATION] Sending timer completion sound');
       
-      // Send a single notification with maximum reliability settings
-      await notifee.displayNotification({
-        id: 'timer-completion', // Use a consistent ID to avoid duplicates
+      // Play sound directly for immediate feedback when app is in foreground
+      await this.playNotificationSound();
+      
+      // Also send a notification for when app is in background
+      await Notifications.presentNotificationAsync({
         title: 'Timer Complete',
         body: 'Your practice timer has finished',
-        android: {
-          channelId: 'timer-completion',
-          sound: 'bell',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          category: AndroidCategory.ALARM, // Use ALARM category for highest priority
-          timestamp: Date.now(),
-          showTimestamp: true,
-          ongoing: true, // Make notification persistent until dismissed
-          autoCancel: false, // Prevent auto-cancellation
-          pressAction: { id: 'default' },
-          fullScreenAction: { // Add full screen intent for maximum visibility
-            id: 'default',
+        sound: Platform.OS === 'android' ? 'bell.mp3' : true,
+        ...(Platform.OS === 'android' && {
+          android: {
+            channelId: 'default',
+            sound: 'bell.mp3',
+            priority: 'max',
+            icon: 'notification-icon',
           },
-          vibrationPattern: [0, 500, 200, 500], // Strong vibration pattern
-          // Note: lights property is not directly supported in this context
-          // Use the channel's light settings instead
-          
-          // Add alarm manager settings for Android
-          ...(Platform.OS === 'android' && {
-            asForegroundService: true, // Run as foreground service for better reliability
-          }),
-        },
-        ios: {
-          critical: true, // Critical alerts break through Focus modes
-          sound: 'bell.mp3',
-          interruptionLevel: 'critical', // Highest priority
-          foregroundPresentationOptions: {
-            sound: true,
-            banner: true,
-            list: true,
-          },
-          criticalVolume: 1.0, // Maximum volume for critical alerts
-        },
+        }),
       });
-      
-      // Also play sound directly for immediate feedback when app is in foreground
-      await this.playNotificationSound();
-
     } catch (error) {
       console.error('[NOTIFICATION] Error playing timer completion sound:', error);
       // Fallback to direct sound playback if notification fails
@@ -896,244 +744,8 @@ const notificationService = {
   },
 
   /**
-   * Test lock screen breakthrough notifications
-   * This function sends a series of notifications specifically designed to test
-   * lock screen breakthrough capabilities
-   * @returns {Promise<string>} Test status message
+   * Test notification functionality
    */
-  async testLockScreenBreakthrough(): Promise<string> {
-    try {
-      console.log('[TEST] Starting lock screen breakthrough test sequence');
-      
-      // Get current step info for context
-      const { currentStepId } = useSettingsStore.getState();
-      const currentStep = stepService.getStepById(currentStepId);
-      
-      if (!currentStep) {
-        console.log('[TEST] No current step found');
-        return 'Error: No current step found';
-      }
-      
-      // 1. Send immediate timer completion notification with maximum breakthrough settings
-      console.log('[TEST] Testing enhanced timer completion notification');
-      await this.sendTimerCompletionSound();
-      
-      // 2. Schedule a notification for 10 seconds later to test delayed breakthrough
-      console.log('[TEST] Scheduling delayed lock screen test (10 seconds)');
-      const tenSecondsLater = new Date(Date.now() + 10000);
-      await notifee.createTriggerNotification(
-        {
-          title: 'Lock Screen Test (Delayed)',
-          body: 'This notification should break through the lock screen',
-          android: {
-            channelId: 'timer-completion',
-            sound: 'bell',
-            importance: AndroidImportance.HIGH,
-            visibility: AndroidVisibility.PUBLIC,
-            category: AndroidCategory.ALARM,
-            fullScreenAction: { id: 'default' },
-            ongoing: true,
-            autoCancel: false,
-            vibrationPattern: [0, 500, 200, 500],
-          },
-          ios: {
-            critical: true,
-            sound: 'bell.mp3',
-            interruptionLevel: 'critical',
-            criticalVolume: 1.0,
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: tenSecondsLater.getTime(),
-          ...(Platform.OS === 'android' && {
-            alarmManager: {
-              allowWhileIdle: true,
-            } as any // Type assertion to bypass TypeScript check
-          }),
-        }
-      );
-      
-      // 3. Send a test notification using the hourly reminder channel
-      console.log('[TEST] Testing hourly reminder channel breakthrough');
-      await notifee.displayNotification({
-        title: 'Hourly Channel Test',
-        body: 'Testing hourly reminder channel breakthrough',
-        android: {
-          channelId: 'notifee-hourly-reminders',
-          sound: 'bell',
-          importance: AndroidImportance.HIGH,
-          visibility: AndroidVisibility.PUBLIC,
-          category: AndroidCategory.ALARM,
-        },
-        ios: {
-          critical: true,
-          sound: 'bell.mp3',
-          interruptionLevel: 'critical',
-        },
-      });
-      
-      console.log('[TEST] All lock screen breakthrough tests initiated');
-      return 'Lock screen breakthrough tests initiated. Please lock your device to test if notifications break through. You should hear sounds and see notifications in 10 seconds.';
-    } catch (error) {
-      console.error('[TEST] Error testing lock screen breakthrough:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return `Error testing lock screen breakthrough: ${errorMessage}`;
-    }
-  },
-
-  /**
-   * Check for scheduled hourly reminders
-   * This is a debugging function to verify that hourly reminders are properly scheduled
-   * @returns {Promise<string>} Status message with information about scheduled reminders
-   */
-  async checkScheduledHourlyReminders(): Promise<string> {
-    try {
-      console.log('[DEBUG] Checking for scheduled hourly reminders');
-      
-      // Get all scheduled notifications from Expo
-      const expoNotifications = await Notifications.getAllScheduledNotificationsAsync();
-      const expoHourlyReminders = expoNotifications.filter(
-        notification => notification.content.title?.includes('Hourly Reminder')
-      );
-      
-      // Get all trigger notifications from Notifee
-      const notifeeNotifications = await notifee.getTriggerNotifications();
-      const notifeeHourlyReminders = notifeeNotifications.filter(
-        notification => notification.notification.title?.includes('Hourly Reminder')
-      );
-      
-      // Log the findings
-      console.log('[DEBUG] Found scheduled hourly reminders:', {
-        expo: expoHourlyReminders.length,
-        notifee: notifeeHourlyReminders.length
-      });
-      
-      // Format the results
-      let result = `Found ${expoHourlyReminders.length + notifeeHourlyReminders.length} scheduled hourly reminders:\n`;
-      
-      if (expoHourlyReminders.length > 0) {
-        result += `\n- Expo Notifications (${expoHourlyReminders.length}):\n`;
-        expoHourlyReminders.forEach((notification, index) => {
-          const trigger = notification.trigger as any;
-          const nextTriggerDate = trigger.nextTriggerDate 
-            ? new Date(trigger.nextTriggerDate).toLocaleString()
-            : 'Unknown';
-          
-          result += `  ${index + 1}. "${notification.content.title}" at ${nextTriggerDate}\n`;
-        });
-      }
-      
-      if (notifeeHourlyReminders.length > 0) {
-        result += `\n- Notifee Notifications (${notifeeHourlyReminders.length}):\n`;
-        notifeeHourlyReminders.forEach((notification, index) => {
-          // Check if the trigger is a TimestampTrigger
-          const trigger = notification.trigger as any;
-          const timestamp = trigger.timestamp;
-          const triggerDate = timestamp 
-            ? new Date(timestamp).toLocaleString()
-            : 'Unknown';
-          
-          result += `  ${index + 1}. "${notification.notification.title}" at ${triggerDate}\n`;
-          result += `     Repeat: ${trigger.repeatFrequency || 'None'}\n`;
-        });
-      }
-      
-      if (expoHourlyReminders.length === 0 && notifeeHourlyReminders.length === 0) {
-        result += "\nNo scheduled hourly reminders found. This could indicate a problem with the scheduling process.";
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('[DEBUG] Error checking scheduled hourly reminders:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return `Error checking scheduled hourly reminders: ${errorMessage}`;
-    }
-  },
-  
-  /**
-   * Test timer bell notifications specifically
-   * This function sends a series of timer completion notifications with different approaches
-   * to help diagnose and verify lock screen breakthrough
-   * @returns {Promise<string>} Test status message
-   */
-  async testTimerBells(): Promise<string> {
-    try {
-      console.log('[TEST] Starting timer bell test sequence');
-      
-      // 1. Send the enhanced timer completion notification
-      console.log('[TEST] Testing primary timer completion notification');
-      await this.sendTimerCompletionSound();
-      
-      // 2. Schedule a delayed notification for 15 seconds later
-      console.log('[TEST] Scheduling delayed timer bell test (15 seconds)');
-      const fifteenSecondsLater = new Date(Date.now() + 15000);
-      
-      // Use Notifee with alarm manager
-      await notifee.createTriggerNotification(
-        {
-          id: 'timer-bell-test-delayed',
-          title: 'Timer Bell Test (Delayed)',
-          body: 'This notification should play a sound through the lock screen',
-          android: {
-            channelId: 'timer-completion',
-            sound: 'bell',
-            importance: AndroidImportance.HIGH,
-            visibility: AndroidVisibility.PUBLIC,
-            category: AndroidCategory.ALARM,
-            fullScreenAction: { id: 'default' },
-            ongoing: true,
-            autoCancel: false,
-            vibrationPattern: [0, 500, 200, 500],
-          },
-          ios: {
-            critical: true,
-            sound: 'bell.mp3',
-            interruptionLevel: 'critical',
-            criticalVolume: 1.0,
-          },
-        },
-        {
-          type: TriggerType.TIMESTAMP,
-          timestamp: fifteenSecondsLater.getTime(),
-          ...(Platform.OS === 'android' && {
-            alarmManager: {
-              allowWhileIdle: true,
-            } as any
-          }),
-        }
-      );
-      
-      // 3. Schedule another notification using Expo's API for 30 seconds later
-      console.log('[TEST] Scheduling Expo notification test (30 seconds)');
-      const thirtySecondsLater = new Date(Date.now() + 30000);
-      await Notifications.scheduleNotificationAsync({
-        content: {
-          title: 'Timer Bell Test (Expo)',
-          body: 'This is a timer bell notification using Expo API',
-          sound: Platform.OS === 'android' ? 'bell.mp3' : true,
-          ...(Platform.OS === 'android' && {
-            android: {
-              channelId: 'default',
-              sound: 'bell.mp3',
-              priority: 'max',
-            },
-          }),
-        },
-        trigger: {
-          type: 'timestamp',
-          timestamp: thirtySecondsLater.getTime(),
-        } as any,
-      });
-      
-      return 'Timer bell tests initiated. Please lock your device to test if notifications break through and play sounds at 15 and 30 seconds from now.';
-    } catch (error) {
-      console.error('[TEST] Error testing timer bells:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      return `Error testing timer bells: ${errorMessage}`;
-    }
-  },
-  
   async testNotifications(): Promise<string> {
     try {
       console.log('[TEST] Starting notification test sequence');
@@ -1160,36 +772,32 @@ const notificationService = {
         true
       );
 
-      // 2. Test Notifee timer completion sound
-      console.log('[TEST] Testing Notifee timer completion sound');
+      // 2. Test timer completion sound
+      console.log('[TEST] Testing timer completion sound');
       await this.sendTimerCompletionSound();
       
-      // 3. Test Notifee hourly reminder (using the new channel)
-      console.log('[TEST] Testing Notifee hourly reminder');
+      // 3. Test hourly reminder (30 seconds later)
+      console.log('[TEST] Scheduling 30-second hourly reminder test');
       const thirtySecondsLater = new Date(Date.now() + 30000);
-      await notifee.createTriggerNotification(
-        {
-          title: `Test Notifee Hourly Reminder: Step ${currentStepId}`,
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: `Test Hourly Reminder: Step ${currentStepId}`,
           body: currentStep.title,
-          android: {
-            channelId: 'notifee-hourly-reminders',
-            sound: 'bell',
-            importance: AndroidImportance.HIGH,
-            visibility: AndroidVisibility.PUBLIC,
-            category: AndroidCategory.ALARM,
-            pressAction: { id: 'default' },
-            smallIcon: 'notification_icon',
-          },
-          ios: {
-            sound: 'bell.mp3',
-            interruptionLevel: 'timeSensitive',
-          },
+          sound: Platform.OS === 'android' ? 'bell.mp3' : true,
+          ...(Platform.OS === 'android' && {
+            android: {
+              channelId: 'hourly-reminders',
+              sound: 'bell.mp3',
+              icon: 'notification-icon',
+              priority: 'max',
+            },
+          }),
         },
-        {
-          type: TriggerType.TIMESTAMP,
+        trigger: {
+          type: 'timestamp',
           timestamp: thirtySecondsLater.getTime(),
-        }
-      );
+        } as any,
+      });
 
       // 4. Test practice reminder (1 minute)
       console.log('[TEST] Scheduling 1-minute practice reminder test');

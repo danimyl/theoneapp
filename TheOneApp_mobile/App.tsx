@@ -20,7 +20,6 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
-import notifee from '@notifee/react-native';
 
 // Components
 import StepsScreen from './src/components/StepsScreen';
@@ -64,26 +63,24 @@ function AppContent() {
         // Clear only displayed notifications when app opens
         await Notifications.dismissAllNotificationsAsync(); // Clear displayed Expo notifications
         
-        // For Notifee, only clear displayed notifications, not scheduled ones
-        const displayedNotifications = await notifee.getDisplayedNotifications();
-        for (const notification of displayedNotifications) {
-          if (notification.id) {
-            await notifee.cancelDisplayedNotification(notification.id);
-          }
-        }
-        console.log('[NOTIFICATIONS] Cleared displayed notifications on app open, preserved scheduled ones');
-        
-        // Initialize Notifee first
-        await notificationService.initializeNotifee();
-        console.log('[NOTIFICATIONS] Notifee initialized');
-
         // Request notification permissions
         const permissionGranted = await notificationService.requestPermissions();
         
         if (permissionGranted) {
           console.log('[NOTIFICATIONS] Permission granted, registering background tasks');
-          // Register background tasks for notifications
-          await notificationService.registerBackgroundTasks();
+          
+          // Check if we need to restart the foreground service (new day)
+          const today = new Date().toISOString().split('T')[0];
+          const { lastForegroundServiceDate } = useSettingsStore.getState();
+          
+          // If it's a new day or the service hasn't been started yet, register background tasks
+          if (lastForegroundServiceDate !== today) {
+            console.log('[NOTIFICATIONS] New day detected or first run, starting foreground service');
+            // Register background tasks for notifications
+            await notificationService.registerBackgroundTasks();
+          } else {
+            console.log('[NOTIFICATIONS] Foreground service already started today');
+          }
           
           // Schedule notifications
           await notificationService.scheduleHourlyReminders();

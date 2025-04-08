@@ -36,10 +36,16 @@
         "gradleCommand": ":app:assembleRelease"
       },
       "ios": {
-        "distribution": "store"
+        "distribution": "store",
+        "resourceClass": "m-medium",
+        "credentialsSource": "local",
+        "image": "macos-monterey-xcode-15"
       },
       "env": {
         "npm_config_legacy_peer_deps": "true"
+      },
+      "cache": {
+        "disabled": true
       }
     }
   },
