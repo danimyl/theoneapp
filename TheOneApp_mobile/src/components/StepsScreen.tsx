@@ -1073,6 +1073,11 @@ export const StepsScreen = () => {
     );
   }
 
+  // Calculate a safe progress value when the hook's progress is invalid
+  const safeProgress = isRunning && currentIndex >= 0 && step?.durations[currentIndex] > 0
+    ? isNaN(progress) ? 1 - (timeLeft / step.durations[currentIndex]) : progress
+    : 0;
+    
   return (
     <View style={[styles.container, { backgroundColor: theme.bgPrimary }]}>
       {/* Step Selector */}
@@ -1104,7 +1109,7 @@ export const StepsScreen = () => {
               STEP {step.id}: {step.title}
             </Text>
             
-            <Text style={[styles.instructionsText, { color: theme.textSecondary }]}>
+            <Text style={[styles.instructionsText, { color: '#DDDDDD' }]}>
               {step.instructions || 'No instructions available for this step.'}
             </Text>
             
@@ -1135,7 +1140,7 @@ export const StepsScreen = () => {
             <View 
               style={[
                 styles.progressBar, 
-                { width: `${progress * 100}%`, backgroundColor: theme.buttonAccent }
+                { width: `${safeProgress * 100}%`, backgroundColor: theme.buttonAccent }
               ]} 
             />
           </View>
@@ -1237,6 +1242,11 @@ export const StepsScreen = () => {
                       style={[
                         styles.checkbox,
                         { borderColor: theme.borderColor },
+                        // Make unchecked checkbox more visible in dark mode
+                        isDark && !completed[index] && { 
+                          borderColor: '#AAAAAA', // Much brighter border for dark mode
+                          borderWidth: 2 // Slightly thicker border for better visibility
+                        },
                         completed[index] && {
                           backgroundColor: theme.buttonAccent,
                           borderColor: theme.buttonAccent
@@ -1276,7 +1286,7 @@ export const StepsScreen = () => {
                         style={[
                           styles.progressBar,
                           { 
-                            width: `${progress * 100}%`,
+                            width: `${safeProgress * 100}%`,
                             backgroundColor: theme.buttonAccent
                           }
                         ]} 

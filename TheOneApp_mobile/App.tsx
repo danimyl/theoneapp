@@ -19,6 +19,8 @@ import { ThemeProvider, useTheme } from './src/contexts/ThemeContext';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
+import notifee from '@notifee/react-native';
 
 // Components
 import StepsScreen from './src/components/StepsScreen';
@@ -59,6 +61,18 @@ function AppContent() {
   useEffect(() => {
     const setupNotifications = async () => {
       try {
+        // Clear only displayed notifications when app opens
+        await Notifications.dismissAllNotificationsAsync(); // Clear displayed Expo notifications
+        
+        // For Notifee, only clear displayed notifications, not scheduled ones
+        const displayedNotifications = await notifee.getDisplayedNotifications();
+        for (const notification of displayedNotifications) {
+          if (notification.id) {
+            await notifee.cancelDisplayedNotification(notification.id);
+          }
+        }
+        console.log('[NOTIFICATIONS] Cleared displayed notifications on app open, preserved scheduled ones');
+        
         // Initialize Notifee first
         await notificationService.initializeNotifee();
         console.log('[NOTIFICATIONS] Notifee initialized');
