@@ -45,25 +45,45 @@ export const FloatingTimerIndicator: React.FC<FloatingTimerIndicatorProps> = ({
   // Animation value for pulsing effect
   const pulseAnim = React.useRef(new Animated.Value(1)).current;
   
-  // Start pulsing animation
+  // Start pulsing animation when component is visible
   React.useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1000,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true
-        })
-      ])
-    ).start();
-  }, [pulseAnim]);
+    // Only start animation when component is visible
+    if (isVisible) {
+      console.log('[TIMER INDICATOR] Starting pulse animation');
+      
+      // Reset animation value to ensure consistent behavior
+      pulseAnim.setValue(1);
+      
+      // Create and store the animation reference so we can stop it later
+      const pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.2,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true
+          })
+        ])
+      );
+      
+      // Start the animation
+      pulseAnimation.start();
+      
+      // Cleanup function to stop animation when component unmounts or becomes invisible
+      return () => {
+        console.log('[TIMER INDICATOR] Stopping pulse animation');
+        pulseAnimation.stop();
+        // Reset to default scale
+        pulseAnim.setValue(1);
+      };
+    }
+  }, [pulseAnim, isVisible]); // Add isVisible to dependencies to restart animation when visibility changes
   
   // State to store the formatted time string
   const [timeDisplay, setTimeDisplay] = useState<string>('');

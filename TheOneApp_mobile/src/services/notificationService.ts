@@ -840,10 +840,9 @@ const notificationService = {
     try {
       console.log('[NOTIFICATION] Sending timer completion sound with enhanced settings');
       
-      // Send notification first for maximum reliability when device is locked
-      // Using maximum aggressive settings for lock screen breakthrough
+      // Send a single notification with maximum reliability settings
       await notifee.displayNotification({
-        id: 'timer-completion-primary', // Use a consistent ID to avoid duplicates
+        id: 'timer-completion', // Use a consistent ID to avoid duplicates
         title: 'Timer Complete',
         body: 'Your practice timer has finished',
         android: {
@@ -882,75 +881,16 @@ const notificationService = {
         },
       });
       
-      // Try to play sound directly for immediate feedback when app is in foreground
+      // Also play sound directly for immediate feedback when app is in foreground
       await this.playNotificationSound();
-
-      // For maximum reliability, send a second notification after a longer delay
-      // This helps on some devices where the first notification might be suppressed
-      setTimeout(async () => {
-        try {
-          await notifee.displayNotification({
-            id: 'timer-completion-backup', // Use a different ID for the backup
-            title: 'Timer Complete',
-            body: 'Your practice timer has finished',
-            android: {
-              channelId: 'timer-completion',
-              sound: 'bell',
-              importance: AndroidImportance.HIGH,
-              visibility: AndroidVisibility.PUBLIC,
-              category: AndroidCategory.ALARM,
-              vibrationPattern: [0, 500, 200, 500], // Strong vibration pattern
-            },
-            ios: {
-              critical: true,
-              sound: 'bell.mp3',
-              interruptionLevel: 'critical',
-              criticalVolume: 1.0,
-            },
-          });
-        } catch (err) {
-          console.error('[NOTIFICATION] Error sending backup timer completion notification:', err);
-        }
-      }, 2000); // 2 second delay for better spacing
-      
-      // Send a third notification with a different approach for maximum compatibility
-      setTimeout(async () => {
-        try {
-          // Use Expo notifications as a fallback
-          await Notifications.scheduleNotificationAsync({
-            content: {
-              title: 'Timer Complete',
-              body: 'Your practice timer has finished',
-              sound: Platform.OS === 'android' ? 'bell.mp3' : true,
-              ...(Platform.OS === 'android' && {
-                android: {
-                  channelId: 'default',
-                  sound: 'bell.mp3',
-                  priority: 'max',
-                },
-              }),
-            },
-            trigger: null, // Send immediately
-          });
-        } catch (err) {
-          console.error('[NOTIFICATION] Error sending third timer completion notification:', err);
-        }
-      }, 3000); // 3 second delay
 
     } catch (error) {
       console.error('[NOTIFICATION] Error playing timer completion sound:', error);
       // Fallback to direct sound playback if notification fails
       try {
         await this.playNotificationSound();
-        
-        // Also try a basic notification as last resort
-        await Notifications.presentNotificationAsync({
-          title: 'Timer Complete',
-          body: 'Your practice timer has finished',
-          sound: true,
-        });
       } catch (err) {
-        console.error('[NOTIFICATION] All fallback methods failed:', err);
+        console.error('[NOTIFICATION] Fallback sound playback failed:', err);
       }
     }
   },

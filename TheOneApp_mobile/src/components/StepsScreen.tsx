@@ -552,11 +552,12 @@ export const StepsScreen = () => {
   const handleTimerComplete = async () => {
     if (currentIndex >= 0 && step) {
       try {
-        // Try direct sound playback first (for immediate feedback when app is in foreground)
-        playCompletionSound();
-        
-        // Also send a notification sound that works when device is locked
+        // Send a notification sound that works when device is locked
+        // This also plays the sound directly when app is in foreground
         await notificationService.sendTimerCompletionSound();
+        
+        // No need to call playCompletionSound() separately as it's already called
+        // inside sendTimerCompletionSound()
       } catch (error) {
         console.error('[STEPS] Error playing completion sound:', error);
       }
@@ -1109,7 +1110,7 @@ export const StepsScreen = () => {
               STEP {step.id}: {step.title}
             </Text>
             
-            <Text style={[styles.instructionsText, { color: '#DDDDDD' }]}>
+            <Text style={[styles.instructionsText, { color: theme.textPrimary }]}>
               {step.instructions || 'No instructions available for this step.'}
             </Text>
             
