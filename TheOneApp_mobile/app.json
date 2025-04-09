@@ -19,7 +19,9 @@
           "icon": "./assets/notification-icon.png",
           "androidIcon": "./assets/notification-icon.png",
           "color": "#1DB954",
-          "sounds": ["./assets/bell.mp3"]
+          "sounds": [
+            "./assets/bell.mp3"
+          ]
         }
       ],
       [
@@ -53,16 +55,13 @@
         "RECEIVE_BOOT_COMPLETED",
         "SCHEDULE_EXACT_ALARM",
         "VIBRATE",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "464ae3de-61b1-4987-8bc6-9ef9dcd2d8d9"
-      }
     },
     "notification": {
       "icon": "./assets/icon.png",
@@ -70,6 +69,12 @@
       "androidMode": "default",
       "androidCollapsedTitle": "TheOneApp",
       "iosDisplayInForeground": true
+    },
+    "owner": "beginningstudents",
+    "extra": {
+      "eas": {
+        "projectId": "464ae3de-61b1-4987-8bc6-9ef9dcd2d8d9"
+      }
     }
   }
 }
