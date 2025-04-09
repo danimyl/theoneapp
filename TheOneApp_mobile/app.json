@@ -3,78 +3,39 @@
     "name": "TheOneApp",
     "slug": "TheOneApp",
     "version": "1.1.5",
+    "updates": { "enabled": false },
+    "jsEngine": "jsc",
+    "newArchEnabled": false,
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "plugins": [
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/notification-icon.png",
-          "androidIcon": "./assets/notification-icon.png",
-          "color": "#1DB954",
-          "sounds": [
-            "./assets/bell.mp3"
-          ]
-        }
-      ],
-      [
-        "expo-background-fetch",
-        {
-          "startOnBoot": true
-        }
-      ],
-      "expo-task-manager"
+      ["expo-notifications", {
+        "icon": "./assets/notification-icon.png",
+        "color": "#1DB954",
+        "sounds": ["bell.mp3"],
+        "iosDisplayInForeground": true
+      }],
+      "expo-task-manager",
+      ["expo-background-fetch", { "startOnBoot": true }]
     ],
     "ios": {
-      "supportsTablet": true,
       "bundleIdentifier": "com.beginningstudents.theoneapp",
       "buildNumber": "2",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": [
-          "fetch",
-          "remote-notification",
-          "audio"
-        ]
-      }
+      "supportsTablet": true,
+      "infoPlist": { "UIBackgroundModes": ["fetch"] }
     },
     "android": {
+      "package": "com.beginningstudents.theoneapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.beginningstudents.theoneapp",
-      "permissions": [
-        "RECEIVE_BOOT_COMPLETED",
-        "SCHEDULE_EXACT_ALARM",
-        "VIBRATE",
-        "WAKE_LOCK",
-        "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.WAKE_LOCK"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "notification": {
-      "icon": "./assets/icon.png",
-      "color": "#1DB954",
-      "androidMode": "default",
-      "androidCollapsedTitle": "TheOneApp",
-      "iosDisplayInForeground": true
-    },
-    "owner": "beginningstudents",
-    "extra": {
-      "eas": {
-        "projectId": "464ae3de-61b1-4987-8bc6-9ef9dcd2d8d9"
-      }
+      "permissions": ["RECEIVE_BOOT_COMPLETED", "VIBRATE"]
     }
   }
 }

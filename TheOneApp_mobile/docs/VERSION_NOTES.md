@@ -9,6 +9,13 @@ This document tracks significant changes and updates to the mobile app.
 - Created new "expo-notifications-only" branch for reimplementation
 - Preserved core functionality while preparing for improved notification system
 
+### Notification System Improvements
+- Enhanced lock screen notification support with critical priority settings
+- Improved notification timing precision using timestamp triggers
+- Optimized background task handling with more efficient intervals
+- Simplified notification service code for better maintainability
+- Added comprehensive documentation in NOTIFICATION_SYSTEM_IMPROVEMENT.md
+
 ## Version 1.1.5 (2025-04-03)
 
 ### UI Improvements
