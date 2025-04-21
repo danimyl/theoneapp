@@ -21,7 +21,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 
 // Components
-import StepsScreen from './src/components/StepsScreen';
+import { StepsScreen } from './src/components/StepsScreen';
 import { BookScreen } from './src/components/BookScreen';
 import SettingsScreen from './src/components/SettingsScreen';
 import SecretModal from './src/components/SecretModal';
@@ -64,12 +64,29 @@ function AppContent() {
         
         if (permissionGranted) {
           console.log('[NOTIFICATIONS] Permission granted, registering background tasks');
+          
+          // First, clear any past hourly reminders to prevent notification pile-up
+          const clearedCount = await notificationService.clearPastHourlyReminders();
+          if (clearedCount > 0) {
+            console.log(`[NOTIFICATIONS] Cleared ${clearedCount} outdated hourly reminders on app start`);
+          }
+          
           // Register background tasks for notifications
           await notificationService.registerBackgroundTasks();
           
-          // Schedule notifications
-          await notificationService.scheduleHourlyReminders();
-          await notificationService.schedulePracticeReminder();
+          // Add a small delay to ensure clearing is complete
+          setTimeout(async () => {
+            // Check if we need to schedule new hourly reminders
+            if (notificationService.needToScheduleHourlyReminders()) {
+              console.log('[NOTIFICATIONS] Scheduling new hourly reminders');
+              await notificationService.scheduleHourlyReminders();
+            } else {
+              console.log('[NOTIFICATIONS] No need to schedule new hourly reminders');
+            }
+            
+            // Schedule practice reminder
+            await notificationService.schedulePracticeReminder();
+          }, 500);
         } else {
           console.log('[NOTIFICATIONS] Permission denied');
         }

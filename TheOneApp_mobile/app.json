@@ -3,7 +3,9 @@
     "name": "TheOneApp",
     "slug": "TheOneApp",
     "version": "1.1.5",
-    "updates": { "enabled": false },
+    "updates": {
+      "enabled": false
+    },
     "jsEngine": "jsc",
     "newArchEnabled": false,
     "orientation": "portrait",
@@ -14,20 +16,33 @@
       "backgroundColor": "#ffffff"
     },
     "plugins": [
-      ["expo-notifications", {
-        "icon": "./assets/notification-icon.png",
-        "color": "#1DB954",
-        "sounds": ["bell.mp3"],
-        "iosDisplayInForeground": true
-      }],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1DB954",
+          "iosDisplayInForeground": true
+        }
+      ],
       "expo-task-manager",
-      ["expo-background-fetch", { "startOnBoot": true }]
+      [
+        "expo-background-fetch",
+        {
+          "startOnBoot": true
+        }
+      ]
     ],
     "ios": {
       "bundleIdentifier": "com.beginningstudents.theoneapp",
       "buildNumber": "2",
       "supportsTablet": true,
-      "infoPlist": { "UIBackgroundModes": ["fetch"] }
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "fetch",
+          "audio",
+          "remote-notification"
+        ]
+      }
     },
     "android": {
       "package": "com.beginningstudents.theoneapp",
@@ -35,7 +50,21 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "permissions": ["RECEIVE_BOOT_COMPLETED", "VIBRATE"]
-    }
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK",
+        "FOREGROUND_SERVICE",
+        "REQUEST_IGNORE_BATTERY_OPTIMIZATIONS",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "extra": {
+      "eas": {
+        "projectId": "464ae3de-61b1-4987-8bc6-9ef9dcd2d8d9"
+      }
+    },
+    "owner": "beginningstudents"
   }
 }

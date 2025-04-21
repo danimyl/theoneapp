@@ -14,6 +14,10 @@ This document tracks significant changes and updates to the mobile app.
 - Improved notification timing precision using timestamp triggers
 - Optimized background task handling with more efficient intervals
 - Simplified notification service code for better maintainability
+- Removed custom sound references to use system default sounds
+- Fixed build issues related to notification sound files
+- Added functionality to clear outdated hourly reminders on app start
+- Ensured hourly reminders are only scheduled for future times
 - Added comprehensive documentation in NOTIFICATION_SYSTEM_IMPROVEMENT.md
 
 ## Version 1.1.5 (2025-04-03)

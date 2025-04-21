@@ -552,9 +552,11 @@ export const StepsScreen = () => {
   const handleTimerComplete = async () => {
     if (currentIndex >= 0 && step) {
       try {
-        // Play the completion sound
+        // Try direct sound playback first (for immediate feedback when app is in foreground)
         playCompletionSound();
-        // Removed the notification sound call
+        
+        // Also send a notification sound that works when device is locked
+        await notificationService.sendTimerCompletionSound();
       } catch (error) {
         console.error('[STEPS] Error playing completion sound:', error);
       }
@@ -1234,10 +1236,7 @@ export const StepsScreen = () => {
                     <TouchableOpacity
                       style={[
                         styles.checkbox,
-                        { 
-                          borderColor: '#cccccc',  // Lighter color for better visibility
-                          borderWidth: 1  // Explicitly set border width
-                        },
+                        { borderColor: theme.borderColor },
                         completed[index] && {
                           backgroundColor: theme.buttonAccent,
                           borderColor: theme.buttonAccent
@@ -1497,4 +1496,4 @@ const styles = StyleSheet.create({
   }
 });
 
-// StepsScreen is already exported as a named export above
+export default StepsScreen;

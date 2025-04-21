@@ -13,6 +13,8 @@ The `notificationService.ts` file has been updated with the following improvemen
 - **Simplified Background Task Handling**: Reduced minimum interval to 15 minutes (iOS minimum) for more frequent background checks
 - **Streamlined Code**: More concise implementation with the same functionality
 - **Better Error Handling**: Improved error logging and recovery
+- **Removed Custom Sounds**: Eliminated all custom sound references to use system default sounds, improving compatibility and reducing build issues
+- **Past Notification Cleanup**: Added functionality to clear outdated hourly reminders when the app opens, preventing notification pile-up
 
 ### 2. App Configuration Updates
 
@@ -24,6 +26,7 @@ The `app.json` file has been updated with the following changes:
 - **Simplified Permissions**: Removed redundant Android permissions while keeping essential ones
 - **Optimized Background Modes**: Streamlined iOS background modes to focus on fetch operations
 - **Improved Plugin Configuration**: Enhanced notification plugin settings
+- **Removed Sound Configuration**: Eliminated custom sound references from the expo-notifications plugin configuration
 
 ### 3. Build Configuration Updates
 
@@ -59,6 +62,6 @@ After building and installing the app, test the following scenarios:
 2. **Timing Precision**: Check that hourly notifications arrive at the expected time
 3. **Background Operation**: Ensure notifications continue to work when the app is in the background
 4. **Sleep Hours**: Confirm that notifications are silenced during configured sleep hours
-5. **Timer Completion Sound**: Test that timer completion sounds play even when the device is locked
+5. **System Sounds**: Verify that the default system sounds play correctly with notifications
 
 Report any issues with specific details about the device, OS version, and the exact behavior observed.

@@ -42,6 +42,11 @@ interface PracticeChecks {
   [stepId: number]: boolean[];
 }
 
+interface ScheduledNotification {
+  id: string;
+  timestamp: number; // Epoch timestamp in milliseconds
+}
+
 interface SettingsState {
   // Theme setting
   isDarkMode: boolean;
@@ -66,6 +71,10 @@ interface SettingsState {
   alwaysHourlyReminders: boolean;
   sleepStart: string; // Format: "22:00" (10:00 PM)
   sleepEnd: string;   // Format: "07:00" (7:00 AM)
+  
+  // Notification tracking
+  scheduledHourlyNotifications: ScheduledNotification[]; // Track scheduled notifications
+  lastNotificationScheduleTime: number | null; // Epoch timestamp of last scheduling
   
   // Practice reminder settings
   practiceReminderEnabled: boolean;
@@ -101,6 +110,12 @@ interface SettingsState {
   setLastAppOpenDate: (date: string | null) => void;
   setLastSecretShownDate: (date: string | null) => void;
   
+  // Notification tracking actions
+  addScheduledNotification: (id: string, timestamp: number) => void;
+  removeScheduledNotification: (id: string) => void;
+  clearScheduledNotifications: () => void;
+  setLastNotificationScheduleTime: (timestamp: number | null) => void;
+  
   // Reset functionality
   resetAllChecks: () => void;
 }
@@ -128,6 +143,10 @@ export const useSettingsStore = create<SettingsState>()(
       alwaysHourlyReminders: false,
       sleepStart: "22:00", // Default sleep start time (10:00 PM)
       sleepEnd: "07:00",   // Default sleep end time (7:00 AM)
+      
+      // Notification tracking
+      scheduledHourlyNotifications: [],
+      lastNotificationScheduleTime: null,
       
       // Practice reminder settings with defaults
       practiceReminderEnabled: true,
@@ -190,6 +209,28 @@ export const useSettingsStore = create<SettingsState>()(
       setLastSecretShownDate: (date) => 
         set({ lastSecretShownDate: date }),
       
+      // Notification tracking actions
+      addScheduledNotification: (id, timestamp) => 
+        set((state) => ({
+          scheduledHourlyNotifications: [
+            ...state.scheduledHourlyNotifications,
+            { id, timestamp }
+          ]
+        })),
+      
+      removeScheduledNotification: (id) => 
+        set((state) => ({
+          scheduledHourlyNotifications: state.scheduledHourlyNotifications.filter(
+            notification => notification.id !== id
+          )
+        })),
+      
+      clearScheduledNotifications: () => 
+        set({ scheduledHourlyNotifications: [] }),
+      
+      setLastNotificationScheduleTime: (timestamp) => 
+        set({ lastNotificationScheduleTime: timestamp }),
+      
       // Timer persistence actions
       setActiveTimer: (stepId, practiceIndex, duration) => {
         const endTime = Date.now() + (duration * 1000);
@@ -245,12 +286,20 @@ export const useSettingsStore = create<SettingsState>()(
         console.log('[SETTINGS] Rehydrating store, validating timer state');
         
         if (state) {
+          // Log the current step ID for debugging
+          console.log('[SETTINGS] Current step ID on rehydration:', state.currentStepId);
+          
+          // Ensure currentStepId is valid
+          if (!state.currentStepId || state.currentStepId < 1) {
+            console.log('[SETTINGS] Invalid currentStepId detected, setting to default (1)');
+            state.currentStepId = 1;
+          }
+          
           const { 
             activeTimerStepId, 
             activeTimerPracticeIndex, 
             activeTimerEndTime, 
-            activeTimerDuration,
-            clearActiveTimer
+            activeTimerDuration
           } = state;
           
           // Check if timer state is valid
@@ -261,7 +310,7 @@ export const useSettingsStore = create<SettingsState>()(
             activeTimerDuration
           )) {
             console.log('[SETTINGS] Invalid timer state detected on rehydration, clearing timer');
-            // Clear the timer state
+            // Clear ONLY the timer state, preserve other state like currentStepId
             state.activeTimerStepId = null;
             state.activeTimerPracticeIndex = null;
             state.activeTimerEndTime = null;

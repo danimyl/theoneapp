@@ -155,7 +155,7 @@ const notificationService = {
         title,
         body,
         sound: playSound,
-        badge: 1,
+        badge: 0, // Set to 0 to prevent badge notifications
         categoryIdentifier: 'Steps to Knowledge', // Custom app name for notification title
         ...(Platform.OS === 'android' && {
           android: {
@@ -163,6 +163,15 @@ const notificationService = {
             priority: 'max',
             alarmClock: true,
             icon: 'notification-icon',
+            // Prevent immediate notification
+            showWhen: false,
+            visibility: 'secret',
+          },
+        }),
+        ...(Platform.OS === 'ios' && {
+          ios: {
+            // Prevent immediate notification on iOS
+            _displayInForeground: false,
           },
         }),
       },
@@ -172,7 +181,10 @@ const notificationService = {
         repeats: false,
       } as any,
     });
-    console.log(`[NOTIFICATION] Scheduled ${identifier} for ${date.toLocaleString()}`);
+    // Only log in development, not in production
+    if (__DEV__) {
+      console.log(`[NOTIFICATION] Scheduled ${identifier} for ${date.toLocaleString()}`);
+    }
     return identifier;
   },
 
@@ -194,32 +206,95 @@ const notificationService = {
     return this.sendNotification(`Hourly Reminder: Step ${stepId}`, stepTitle, true, immediate);
   },
 
+  /**
+   * Check if a time is within sleep hours
+   * @param date The date to check
+   * @returns true if the time is within sleep hours
+   */
+  isTimeWithinSleepHours(date: Date): boolean {
+    const { sleepStart, sleepEnd } = useSettingsStore.getState();
+    const [startHour, startMinute] = sleepStart.split(':').map(Number);
+    const [endHour, endMinute] = sleepEnd.split(':').map(Number);
+    
+    const timeInMinutes = date.getHours() * 60 + date.getMinutes();
+    const sleepStartInMinutes = startHour * 60 + startMinute;
+    const sleepEndInMinutes = endHour * 60 + endMinute;
+    
+    // Handle cases where sleep period crosses midnight
+    return sleepStartInMinutes > sleepEndInMinutes
+      ? timeInMinutes >= sleepStartInMinutes || timeInMinutes <= sleepEndInMinutes
+      : timeInMinutes >= sleepStartInMinutes && timeInMinutes <= sleepEndInMinutes;
+  },
+  
+  /**
+   * Check if we need to schedule new hourly reminders
+   * @returns true if we need to schedule new reminders
+   */
+  needToScheduleHourlyReminders(): boolean {
+    const { 
+      scheduledHourlyNotifications, 
+      lastNotificationScheduleTime 
+    } = useSettingsStore.getState();
+    
+    const now = Date.now();
+    
+    // If we haven't scheduled any notifications yet, or it's been more than 12 hours
+    if (!lastNotificationScheduleTime || (now - lastNotificationScheduleTime) > 12 * 60 * 60 * 1000) {
+      return true;
+    }
+    
+    // If we have fewer than 12 notifications scheduled
+    if (scheduledHourlyNotifications.length < 12) {
+      return true;
+    }
+    
+    // Check if we have notifications scheduled for at least the next 12 hours
+    const twelveHoursFromNow = now + (12 * 60 * 60 * 1000);
+    const futureNotifications = scheduledHourlyNotifications.filter(
+      notification => notification.timestamp > now && notification.timestamp < twelveHoursFromNow
+    );
+    
+    // If we have fewer than 6 notifications in the next 12 hours, schedule more
+    return futureNotifications.length < 6;
+  },
+  
   async scheduleHourlyReminders(): Promise<void> {
-    const { currentStepId, alwaysHourlyReminders } = useSettingsStore.getState();
+    const { 
+      currentStepId, 
+      alwaysHourlyReminders,
+      clearScheduledNotifications,
+      setLastNotificationScheduleTime
+    } = useSettingsStore.getState();
+    
     if (!currentStepId) return;
 
     const currentStep = stepService.getStepById(currentStepId);
     if (!currentStep || !(currentStep.hourly || alwaysHourlyReminders)) return;
+    
+    // Check if we need to schedule new reminders
+    if (!this.needToScheduleHourlyReminders()) {
+      console.log('[NOTIFICATION] No need to schedule new hourly reminders');
+      return;
+    }
 
     // First, clear any existing hourly reminders
     await this.cancelHourlyReminders();
     
-    // Then schedule new ones, but only for future times
+    // Clear the scheduled notifications in the store
+    clearScheduledNotifications();
+    
+    // Then schedule new ones, but only for future times and wake hours
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
     let scheduledCount = 0;
     
+    // Schedule for the next 24 hours, but only during wake hours
     for (let i = 1; i <= 24; i++) {
-      const hour = (currentHour + i) % 24;
       const nextDate = new Date(now);
-      nextDate.setHours(hour, 0, 0, 0);
+      nextDate.setHours(now.getHours() + i, 0, 0, 0);
       
-      // Ensure the date is in the future
-      if (nextDate <= now) {
-        // If we're in the same hour, the date might be in the past
-        // Add a day to make sure it's in the future
-        nextDate.setDate(nextDate.getDate() + 1);
+      // Skip if this time is within sleep hours
+      if (this.isTimeWithinSleepHours(nextDate)) {
+        continue;
       }
       
       const identifier = await this.scheduleNotification(
@@ -230,60 +305,89 @@ const notificationService = {
       );
       
       if (identifier) {
+        // Store the scheduled notification in the store
+        useSettingsStore.getState().addScheduledNotification(
+          identifier,
+          nextDate.getTime()
+        );
         scheduledCount++;
       }
     }
     
-    console.log(`[NOTIFICATION] Scheduled ${scheduledCount} hourly reminders for the next 24 hours`);
+    // Update the last schedule time
+    setLastNotificationScheduleTime(Date.now());
+    
+    console.log(`[NOTIFICATION] Scheduled ${scheduledCount} hourly reminders during wake hours`);
   },
 
   async cancelHourlyReminders(): Promise<void> {
     const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+    const { clearScheduledNotifications } = useSettingsStore.getState();
+    
     for (const notification of scheduled) {
       if (notification.content.title?.includes('Hourly Reminder')) {
         await Notifications.cancelScheduledNotificationAsync(notification.identifier);
       }
     }
+    
+    // Clear the scheduled notifications in the store
+    clearScheduledNotifications();
+    console.log('[NOTIFICATION] Cancelled all hourly reminders');
   },
 
   /**
-   * Clear all hourly reminders scheduled for times in the past
+   * Clear all hourly reminders and update the store
    * This prevents a pile-up of outdated notifications when the app opens
-   * @returns {Promise<number>} Number of past notifications cleared
+   * @returns {Promise<number>} Number of notifications cleared
    */
   async clearPastHourlyReminders(): Promise<number> {
     try {
-      const now = new Date();
+      // Get all scheduled notifications
       const scheduled = await Notifications.getAllScheduledNotificationsAsync();
+      const { 
+        clearScheduledNotifications,
+        addScheduledNotification
+      } = useSettingsStore.getState();
+      
       let clearedCount = 0;
+      let keptCount = 0;
+      
+      // Clear all stored notifications first
+      clearScheduledNotifications();
 
       for (const notification of scheduled) {
         // Only process hourly reminders
-        if (!notification.content.title?.includes('Hourly Reminder')) {
-          continue;
-        }
-
-        // Check if this notification has a timestamp trigger
-        if (notification.trigger && 'timestamp' in notification.trigger) {
-          const timestamp = notification.trigger.timestamp as number;
-          const triggerTime = new Date(timestamp);
-          
-          // If the trigger time is in the past, cancel the notification
-          if (triggerTime < now) {
+        if (notification.content.title?.includes('Hourly Reminder')) {
+          // Check if this notification has a timestamp trigger
+          if (notification.trigger && 'timestamp' in notification.trigger) {
+            const timestamp = notification.trigger.timestamp as number;
+            const triggerTime = new Date(timestamp);
+            const now = new Date();
+            
+            // If the trigger time is in the past or within sleep hours, cancel it
+            if (triggerTime <= now || this.isTimeWithinSleepHours(triggerTime)) {
+              await Notifications.cancelScheduledNotificationAsync(notification.identifier);
+              clearedCount++;
+            } else {
+              // Keep track of valid future notifications
+              addScheduledNotification(notification.identifier, timestamp);
+              keptCount++;
+            }
+          } else {
+            // If no timestamp trigger, cancel it
             await Notifications.cancelScheduledNotificationAsync(notification.identifier);
             clearedCount++;
-            console.log(`[NOTIFICATION] Cleared past hourly reminder scheduled for ${triggerTime.toLocaleString()}`);
           }
         }
       }
 
       if (clearedCount > 0) {
-        console.log(`[NOTIFICATION] Cleared ${clearedCount} past hourly reminders`);
+        console.log(`[NOTIFICATION] Cleared ${clearedCount} hourly reminders, kept ${keptCount}`);
       }
       
       return clearedCount;
     } catch (error) {
-      console.error('[NOTIFICATION] Error clearing past hourly reminders:', error);
+      console.error('[NOTIFICATION] Error clearing hourly reminders:', error);
       return 0;
     }
   },
